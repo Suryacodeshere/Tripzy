@@ -253,7 +253,7 @@ h1, h2, h3, h4, h5, h6 {
         border-radius: 12px;
         text-transform: uppercase;
         
-        &.rider { background: $color-primary; color: white; }
+        &.passenger { background: $color-primary; color: white; }
         &.driver { background: $color-success; color: white; }
         &.admin { background: $color-warning; color: $text-dark; }
       }
@@ -444,7 +444,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-// Rider Specific Controls
+// Passenger Specific Controls
 .search-box {
   display: flex;
   flex-direction: column;

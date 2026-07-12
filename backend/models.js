@@ -8,7 +8,7 @@ const userSchema = new Schema({
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
   passwordHash: { type: String, required: true },
-  role: { type: String, enum: ['rider', 'driver', 'admin'], required: true },
+  role: { type: String, enum: ['passenger', 'driver', 'admin'], required: true },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -40,7 +40,7 @@ driverProfileSchema.index({ currentLoc: '2dsphere' });
 
 // Ride Schema
 const rideSchema = new Schema({
-  riderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  passengerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   driverId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   pickupLoc: {
     type: {
@@ -76,9 +76,9 @@ const rideSchema = new Schema({
   fare: { type: Number, required: true },
   razorpayOrderId: { type: String, default: null },
   razorpayPaymentId: { type: String, default: null },
-  riderRating: { type: Number, default: null },
+  passengerRating: { type: Number, default: null },
   driverRating: { type: Number, default: null },
-  riderReview: { type: String, default: '' },
+  passengerReview: { type: String, default: '' },
   driverReview: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now },
   completedAt: { type: Date, default: null }

@@ -4,7 +4,7 @@ import { useAuth } from '../App.jsx';
 export default function Auth() {
   const { login } = useAuth();
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [role, setRole] = useState('rider'); // rider or driver
+  const [role, setRole] = useState('passenger'); // passenger or driver
   
   // Form fields
   const [name, setName] = useState('');
@@ -73,15 +73,15 @@ export default function Auth() {
           </div>
         )}
 
-        {/* Toggle between Rider / Driver role selection in registration mode */}
+        {/* Toggle between Passenger / Driver role selection in registration mode */}
         {!isLoginMode && (
           <div className="role-selector">
             <button 
               type="button" 
-              className={role === 'rider' ? 'active' : ''} 
-              onClick={() => setRole('rider')}
+              className={role === 'passenger' ? 'active' : ''} 
+              onClick={() => setRole('passenger')}
             >
-              Rider Account
+              Passenger Account
             </button>
             <button 
               type="button" 

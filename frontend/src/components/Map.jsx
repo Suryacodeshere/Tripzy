@@ -210,7 +210,7 @@ export default function Map({
     }
   }, [driverLoc]);
 
-  // Sync Nearby Idle Drivers (For Rider screen before request)
+  // Sync Nearby Idle Drivers (For Passenger screen before request)
   useEffect(() => {
     const map = mapRef.current;
     const group = nearbyDriversGroupRef.current;

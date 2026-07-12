@@ -45,7 +45,7 @@ router.post('/:id/create-order', authenticateToken, async (req, res) => {
         currency: 'INR',
         receipt: `ride_${ride._id}`,
         notes: {
-          riderId: ride.riderId._id ? ride.riderId._id.toString() : ride.riderId.toString(),
+          passengerId: ride.passengerId._id ? ride.passengerId._id.toString() : ride.passengerId.toString(),
           rideId: ride._id.toString()
         }
       };

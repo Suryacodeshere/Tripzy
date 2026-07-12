@@ -70,7 +70,7 @@ router.post('/', authenticateToken, async (req, res) => {
     const fare = +(FARE_BASE + (distanceKm * FARE_PER_KM) + (durationMin * FARE_PER_MIN)).toFixed(2);
 
     const ride = await dbService.createRide({
-      riderId: req.user.userId,
+      passengerId: req.user.userId,
       pickupLoc: {
         type: 'Point',
         coordinates: pickupLoc.coordinates
@@ -214,11 +214,11 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Ride not found.' });
     }
 
-    // Check authorization: Rider can cancel, Driver can transition arrived -> started -> completed
+    // Check authorization: Passenger can cancel, Driver can transition arrived -> started -> completed
     const isDriver = req.user.userId.toString() === (ride.driverId ? ride.driverId._id || ride.driverId : '').toString();
-    const isRider = req.user.userId.toString() === (ride.riderId ? ride.riderId._id || ride.riderId : '').toString();
+    const isPassenger = req.user.userId.toString() === (ride.passengerId ? ride.passengerId._id || ride.passengerId : '').toString();
 
-    if (!isDriver && !isRider) {
+    if (!isDriver && !isPassenger) {
       return res.status(403).json({ message: 'Unauthorized to change status of this ride.' });
     }
 
@@ -277,12 +277,12 @@ router.post('/:id/rating', authenticateToken, async (req, res) => {
     }
 
     const isDriver = req.user.role === 'driver';
-    const isRider = req.user.role === 'rider';
+    const isPassenger = req.user.role === 'passenger';
 
     let updatedRide;
 
-    if (isRider) {
-      // Rider rates Driver
+    if (isPassenger) {
+      // Passenger rates Driver
       updatedRide = await dbService.updateRide(req.params.id, {
         driverRating: rating,
         driverReview: review || ''
@@ -303,10 +303,10 @@ router.post('/:id/rating', authenticateToken, async (req, res) => {
         }
       }
     } else if (isDriver) {
-      // Driver rates Rider
+      // Driver rates Passenger
       updatedRide = await dbService.updateRide(req.params.id, {
-        riderRating: rating,
-        riderReview: review || ''
+        passengerRating: rating,
+        passengerReview: review || ''
       });
     } else {
       return res.status(400).json({ message: 'Invalid role for rating.' });

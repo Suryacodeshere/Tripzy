@@ -50,7 +50,7 @@ export default function AdminDashboard() {
   }
 
   // Calculate statistics
-  const totalRiders = users.filter(u => u.role === 'rider').length;
+  const totalPassengers = users.filter(u => u.role === 'passenger').length;
   const totalDrivers = users.filter(u => u.role === 'driver').length;
   const completedRides = rides.filter(r => r.status === 'completed' || r.status === 'paid');
   const totalEarnings = completedRides.reduce((sum, r) => sum + r.fare, 0).toFixed(2);
@@ -87,8 +87,8 @@ export default function AdminDashboard() {
           <span className="value" style={{ color: '#6366f1' }}>{activeTripsCount}</span>
         </div>
         <div className="stat-card glass-panel">
-          <span className="label">Rider Accounts</span>
-          <span className="value">{totalRiders}</span>
+          <span className="label">Passenger Accounts</span>
+          <span className="value">{totalPassengers}</span>
         </div>
         <div className="stat-card glass-panel">
           <span className="label">Driver Partners</span>
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
             <thead>
               <tr>
                 <th>Ride ID</th>
-                <th>Rider</th>
+                <th>Passenger</th>
                 <th>Driver</th>
                 <th>Pickup Location</th>
                 <th>Drop Destination</th>
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
                   <td style={{ fontFamily: 'monospace', color: '#818cf8' }}>
                     #{r._id.substring(18)}
                   </td>
-                  <td>{r.riderId?.name || 'Unknown Rider'}</td>
+                  <td>{r.passengerId?.name || 'Unknown Passenger'}</td>
                   <td>{r.driverId?.name || 'Unassigned'}</td>
                   <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={r.pickupAddress}>
                     {r.pickupAddress}

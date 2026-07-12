@@ -32,7 +32,7 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ message: 'Please provide all required fields.' });
   }
 
-  if (!['rider', 'driver', 'admin'].includes(role)) {
+  if (!['passenger', 'driver', 'admin'].includes(role)) {
     return res.status(400).json({ message: 'Invalid role specified.' });
   }
 

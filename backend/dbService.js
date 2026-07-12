@@ -186,9 +186,9 @@ export const dbService = {
         status: 'requested',
         razorpayOrderId: null,
         razorpayPaymentId: null,
-        riderRating: null,
+        passengerRating: null,
         driverRating: null,
-        riderReview: '',
+        passengerReview: '',
         driverReview: '',
         createdAt: new Date(),
         completedAt: null,
@@ -204,18 +204,18 @@ export const dbService = {
     if (isDemoMode) {
       const ride = memoryDb.rides.find(r => r._id.toString() === id.toString());
       if (ride) {
-        const rider = memoryDb.users.find(u => u._id.toString() === ride.riderId.toString());
+        const passenger = memoryDb.users.find(u => u._id.toString() === ride.passengerId.toString());
         const driver = ride.driverId ? memoryDb.users.find(u => u._id.toString() === ride.driverId.toString()) : null;
         let driverProfile = null;
         if (ride.driverId) {
           driverProfile = memoryDb.driverProfiles.find(p => p.userId.toString() === ride.driverId.toString());
         }
-        return { ...ride, riderId: rider, driverId: driver, driverProfile };
+        return { ...ride, passengerId: passenger, driverId: driver, driverProfile };
       }
       return null;
     }
     
-    const ride = await Ride.findById(id).populate('riderId').populate('driverId');
+    const ride = await Ride.findById(id).populate('passengerId').populate('driverId');
     if (ride && ride.driverId) {
       const driverProfile = await DriverProfile.findOne({ userId: ride.driverId._id });
       return { ...ride.toObject(), driverProfile };
@@ -234,40 +234,40 @@ export const dbService = {
       }
       memoryDb.rides[rideIndex] = updated;
       
-      const rider = memoryDb.users.find(u => u._id.toString() === updated.riderId.toString());
+      const passenger = memoryDb.users.find(u => u._id.toString() === updated.passengerId.toString());
       const driver = updated.driverId ? memoryDb.users.find(u => u._id.toString() === updated.driverId.toString()) : null;
-      return { ...updated, riderId: rider, driverId: driver };
+      return { ...updated, passengerId: passenger, driverId: driver };
     }
     return await Ride.findByIdAndUpdate(
       id,
       { $set: updateData },
       { new: true }
-    ).populate('riderId').populate('driverId');
+    ).populate('passengerId').populate('driverId');
   },
 
   async getRidesByUserId(userId, role) {
     if (isDemoMode) {
-      const key = role === 'driver' ? 'driverId' : 'riderId';
+      const key = role === 'driver' ? 'driverId' : 'passengerId';
       const filtered = memoryDb.rides.filter(r => r[key] && r[key].toString() === userId.toString());
       return filtered.map(ride => {
-        const rider = memoryDb.users.find(u => u._id.toString() === ride.riderId.toString());
+        const passenger = memoryDb.users.find(u => u._id.toString() === ride.passengerId.toString());
         const driver = ride.driverId ? memoryDb.users.find(u => u._id.toString() === ride.driverId.toString()) : null;
-        return { ...ride, riderId: rider, driverId: driver };
+        return { ...ride, passengerId: passenger, driverId: driver };
       });
     }
-    const query = role === 'driver' ? { driverId: userId } : { riderId: userId };
-    return await Ride.find(query).populate('riderId').populate('driverId').sort({ createdAt: -1 });
+    const query = role === 'driver' ? { driverId: userId } : { passengerId: userId };
+    return await Ride.find(query).populate('passengerId').populate('driverId').sort({ createdAt: -1 });
   },
 
   async getAllRides() {
     if (isDemoMode) {
       return memoryDb.rides.map(ride => {
-        const rider = memoryDb.users.find(u => u._id.toString() === ride.riderId.toString());
+        const passenger = memoryDb.users.find(u => u._id.toString() === ride.passengerId.toString());
         const driver = ride.driverId ? memoryDb.users.find(u => u._id.toString() === ride.driverId.toString()) : null;
-        return { ...ride, riderId: rider, driverId: driver };
+        return { ...ride, passengerId: passenger, driverId: driver };
       });
     }
-    return await Ride.find({}).populate('riderId').populate('driverId').sort({ createdAt: -1 });
+    return await Ride.find({}).populate('passengerId').populate('driverId').sort({ createdAt: -1 });
   },
 
   // LOCATION LOG OPERATIONS

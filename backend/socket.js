@@ -45,7 +45,7 @@ export function initSocket(io) {
 
       try {
         if (rideId) {
-          // Driver is on active trip: relay location in real-time to rider
+          // Driver is on active trip: relay location in real-time to passenger
           io.to(`ride_${rideId}`).emit('location:update', {
             lat,
             lng,
@@ -71,7 +71,7 @@ export function initSocket(io) {
             isOnline: true
           });
 
-          // Broadcast to all clients (riders) that a driver location updated
+          // Broadcast to all clients (passengers) that a driver location updated
           if (updatedProfile) {
             io.emit('driver:location_changed', {
               driverId: driverUserId,
@@ -112,10 +112,10 @@ export const socketEmitter = {
       console.log(`🚗 Broadcasting ride:${status} for ride_${rideId}`);
       ioInstance.to(`ride_${rideId}`).emit('ride:status_changed', { status, ride: rideData });
       
-      // Also broadcast generally to Rider / Driver individual rooms as a fallback
-      if (rideData.riderId) {
-        const riderId = rideData.riderId._id || rideData.riderId;
-        ioInstance.to(`user_${riderId}`).emit('ride:status_changed', { status, ride: rideData });
+      // Also broadcast generally to Passenger / Driver individual rooms as a fallback
+      if (rideData.passengerId) {
+        const passengerId = rideData.passengerId._id || rideData.passengerId;
+        ioInstance.to(`user_${passengerId}`).emit('ride:status_changed', { status, ride: rideData });
       }
       if (rideData.driverId) {
         const driverId = rideData.driverId._id || rideData.driverId;

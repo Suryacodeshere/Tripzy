@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth, getSocket } from '../App.jsx';
 import Map from '../components/Map.jsx';
 
-export default function RiderDashboard() {
+export default function PassengerDashboard() {
   const { user, token } = useAuth();
   const socket = getSocket();
 
@@ -51,7 +51,7 @@ export default function RiderDashboard() {
     if (!socket) return;
 
     // Join user room on mount
-    socket.emit('auth:join', { userId: user.id, role: 'rider', name: user.name });
+    socket.emit('auth:join', { userId: user.id, role: 'passenger', name: user.name });
 
     // 1. Listen for real-time ride status transitions
     socket.on('ride:status_changed', (data) => {

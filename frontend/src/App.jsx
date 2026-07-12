@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import io from 'socket.io-client';
 import Auth from './pages/Auth.jsx';
-import RiderDashboard from './pages/RiderDashboard.jsx';
+import PassengerDashboard from './pages/PassengerDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 
@@ -146,16 +146,16 @@ export default function App() {
                 ) : user.role === 'admin' ? (
                   <Navigate to="/admin" replace />
                 ) : (
-                  <Navigate to="/rider" replace />
+                  <Navigate to="/passenger" replace />
                 )
               ) : (
                 <Navigate to="/login" replace />
               )
             } />
 
-            <Route path="/rider" element={
-              <ProtectedRoute allowedRoles={['rider']}>
-                <RiderDashboard />
+            <Route path="/passenger" element={
+              <ProtectedRoute allowedRoles={['passenger']}>
+                <PassengerDashboard />
               </ProtectedRoute>
             } />
 

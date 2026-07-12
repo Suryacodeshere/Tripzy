@@ -49,7 +49,7 @@ export default function DriverDashboard() {
     // Join driver channel
     socket.emit('auth:join', { userId: user.id, role: 'driver', name: user.name });
 
-    // 1. Listen for incoming ride request broadcasts from Rider within 3km
+    // 1. Listen for incoming ride request broadcasts from Passenger within 3km
     socket.on('ride:request', (data) => {
       console.log('🚗 Ride request broadcast received:', data);
       if (activeRide || !isOnline) return; // Ignore if busy or offline
@@ -71,7 +71,7 @@ export default function DriverDashboard() {
       }, 1000);
     });
 
-    // 2. Listen for ride status updates (specifically Rider paying)
+    // 2. Listen for ride status updates (specifically Passenger paying)
     socket.on('ride:status_changed', (data) => {
       console.log('🚗 Status changed received in Driver:', data);
       const updatedRide = data.ride;
@@ -79,7 +79,7 @@ export default function DriverDashboard() {
       if (updatedRide._id === activeRide?._id || updatedRide._id === rideIdFromState()) {
         setActiveRide(updatedRide);
         if (updatedRide.status === 'paid') {
-          // Trigger Rating modal for driver to rate rider
+          // Trigger Rating modal for driver to rate passenger
           setShowRatingModal(true);
         }
       }
@@ -120,7 +120,7 @@ export default function DriverDashboard() {
 
         // If completed but unpaid, keep showing wait panel
         if (active.status === 'completed') {
-          // If rider already paid, show rating
+          // If passenger already paid, show rating
           if (active.status === 'paid') {
             setShowRatingModal(true);
           }
@@ -264,7 +264,7 @@ export default function DriverDashboard() {
     }
   };
 
-  // Rate Rider
+  // Rate Passenger
   const handleRatingSubmit = async () => {
     if (!activeRide) return;
     try {
@@ -320,7 +320,7 @@ export default function DriverDashboard() {
             <div className="radar-ring pulse-success"></div>
             <h4>Waiting for Ride Requests...</h4>
             <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>
-              Your live coordinates are broadcasting to riders within 3km.
+              Your live coordinates are broadcasting to passengers within 3km.
             </p>
           </div>
         )}
@@ -335,13 +335,13 @@ export default function DriverDashboard() {
               {activeRide.status === 'completed' && 'Trip Finished'}
             </div>
 
-            {/* Rider profile info */}
-            {activeRide.riderId && (
+            {/* Passenger profile info */}
+            {activeRide.passengerId && (
               <div className="driver-card">
                 <div className="driver-avatar">👤</div>
                 <div className="driver-details">
-                  <div className="name">{activeRide.riderId.name || 'Rider Customer'}</div>
-                  <div className="rating">📞 {activeRide.riderId.phone}</div>
+                  <div className="name">{activeRide.passengerId.name || 'Passenger Customer'}</div>
+                  <div className="rating">📞 {activeRide.passengerId.phone}</div>
                   <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '4px' }}>
                     💰 Est. Fare: <strong>₹{activeRide.fare}</strong> • {activeRide.distanceKm} km
                   </div>
@@ -390,7 +390,7 @@ export default function DriverDashboard() {
 
               {activeRide.status === 'completed' && (
                 <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px', textAlign: 'center', color: '#fbbf24', fontWeight: 600 }}>
-                  ⏳ Waiting for Rider to pay ₹{activeRide.fare}
+                  ⏳ Waiting for Passenger to pay ₹{activeRide.fare}
                 </div>
               )}
             </div>
@@ -459,7 +459,7 @@ export default function DriverDashboard() {
         <div className="payment-modal-overlay">
           <div className="payment-card glass-panel rating-card animate-slide">
             <h3>⭐ Trip Completed & Paid!</h3>
-            <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Please rate the rider customer</p>
+            <p style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Please rate the passenger customer</p>
             
             <div className="stars-row">
               {[1, 2, 3, 4, 5].map((star) => (
