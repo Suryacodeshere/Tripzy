@@ -6,6 +6,18 @@ import PassengerDashboard from './pages/PassengerDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 
+// Override fetch to support backend URL redirection in production
+const originalFetch = window.fetch;
+window.fetch = async (input, init) => {
+  if (typeof input === 'string' && input.startsWith('/api')) {
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    if (backendUrl !== '/') {
+      input = `${backendUrl.replace(/\/$/, '')}${input}`;
+    }
+  }
+  return originalFetch(input, init);
+};
+
 // 1. Auth Context Creation
 const AuthContext = createContext(null);
 
@@ -50,8 +62,8 @@ export default function App() {
       socket.disconnect();
     }
     
-    // Connect to the backend server (proxy or local port)
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/';
+    // Connect to the backend server
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     socket = io(backendUrl);
 
     socket.on('connect', () => {
