@@ -28,14 +28,19 @@ export default function App() {
     const savedDriverProfile = localStorage.getItem('tripzy_driver_profile');
 
     if (savedToken && savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      if (parsedUser.role === 'rider') {
+        parsedUser.role = 'passenger';
+        localStorage.setItem('tripzy_user', JSON.stringify(parsedUser));
+      }
       setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      setUser(parsedUser);
       if (savedDriverProfile) {
         setDriverProfile(JSON.parse(savedDriverProfile));
       }
       
       // Establish WebSocket
-      connectWebSocket(savedToken, JSON.parse(savedUser), savedDriverProfile ? JSON.parse(savedDriverProfile) : null);
+      connectWebSocket(savedToken, parsedUser, savedDriverProfile ? JSON.parse(savedDriverProfile) : null);
     }
     setLoading(false);
   }, []);
