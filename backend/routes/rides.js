@@ -87,8 +87,9 @@ router.post('/', authenticateToken, async (req, res) => {
       status: 'requested'
     });
 
+    const rideObj = typeof ride.toObject === 'function' ? ride.toObject() : ride;
     const rideResponse = {
-      ...ride,
+      ...rideObj,
       routeGeometry: geometry
     };
 
@@ -151,8 +152,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const dropCoords = ride.dropLoc.coordinates;
     const { geometry } = await getRouteDetails(pickupCoords, dropCoords);
 
+    const rideObj = typeof ride.toObject === 'function' ? ride.toObject() : ride;
     res.json({
-      ...ride,
+      ...rideObj,
       routeGeometry: geometry
     });
   } catch (error) {
