@@ -7,7 +7,7 @@
 Tripzy is a modern, real-time ride-sharing application built with the MERN stack. It allows passengers to request rides and drivers to accept them, featuring real-time location tracking, secure payments, and a seamless map-based user interface.
 
 ### 🌐 Live Demo
-**[Play with the Live App here!](https://frontend-tqo5k371p-suryas-projects-b65a9565.vercel.app)** *(Deployed on Vercel)*
+**[Play with the Live App here!](https://tripzy-eta.vercel.app/)** *(Deployed on Vercel)*
 
 ---
 
