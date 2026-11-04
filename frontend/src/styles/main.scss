@@ -1177,863 +1177,870 @@ $taxi-card-bg: rgba(15, 18, 30, 0.85);
   }
 }
 
-// Marlin Main Landing Container
-.marlin-taxi-landing {
-  background: $taxi-dark;
-  color: #f3f4f6;
+// -----------------------------------------------------------------
+// RAPIDO-STYLE COMMERCIAL CONSUMER APP THEME (White & Vibrant Yellow)
+// -----------------------------------------------------------------
+
+$rapido-yellow: #fdb813;
+$rapido-yellow-hover: #f59e0b;
+$rapido-dark: #111827;
+$rapido-gray-bg: #f9fafb;
+$rapido-card-bg: #f4f5f7;
+$rapido-border: #e5e7eb;
+
+.yellow-pill {
+  background: $rapido-yellow;
+  color: #111827;
+  font-family: $font-headings;
+  font-weight: 900;
+  font-size: 1.45rem;
+  letter-spacing: -0.04em;
+  padding: 6px 20px;
+  border-radius: 9999px;
+  display: inline-block;
+  line-height: 1.1;
+  box-shadow: 0 2px 8px rgba(253, 184, 19, 0.35);
+}
+
+.btn-rapido-black {
+  background: #111827;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 10px 24px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #000000;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: #fff;
+  }
+}
+
+.btn-rapido-black-large {
+  @extend .btn-rapido-black;
+  padding: 14px 32px;
+  font-size: 1.05rem;
+}
+
+.btn-rapido-yellow {
+  background: $rapido-yellow;
+  color: #111827;
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: $rapido-yellow-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(253, 184, 19, 0.4);
+  }
+}
+
+.btn-rapido-outline {
+  background: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #111827;
+    color: #111827;
+  }
+}
+
+.btn-rapido-link {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+  padding: 8px 14px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #000;
+  }
+}
+
+// Main Rapido Light Consumer Container
+.rapido-theme-app {
+  background: #ffffff;
+  color: #1f2937;
   font-family: $font-body;
   overflow-x: hidden;
 
-  // Top Announcement Banner
-  .top-taxi-banner {
-    background: #0f121d;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 8px 24px;
-    font-size: 0.82rem;
-
-    .banner-content {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      @media (max-width: 768px) {
-        flex-direction: column;
-        gap: 4px;
-        text-align: center;
-      }
-
-      .banner-contact {
-        color: $taxi-gold-light;
-      }
-    }
-  }
-
-  // Header
-  .marlin-header {
+  // 1. Navbar
+  .rapido-navbar {
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: rgba(10, 12, 20, 0.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
-    padding: 14px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #f3f4f6;
+    padding: 14px 32px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 
-    .header-container {
-      max-width: 1280px;
+    .nav-container {
+      max-width: 1240px;
       margin: 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .marlin-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .brand-logo {
       text-decoration: none;
-
-      .logo-badge {
-        font-size: 1.8rem;
-        background: rgba($taxi-gold, 0.15);
-        border: 1px solid rgba($taxi-gold, 0.4);
-        padding: 4px 8px;
-        border-radius: 10px;
-      }
-
-      .logo-text {
-        display: flex;
-        flex-direction: column;
-
-        .brand-title {
-          font-family: $font-headings;
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: #fff;
-          letter-spacing: -0.02em;
-          line-height: 1.1;
-        }
-
-        .brand-sub {
-          font-size: 0.65rem;
-          letter-spacing: 0.25em;
-          color: $taxi-gold;
-          font-weight: 700;
-        }
-      }
     }
 
-    .marlin-nav {
+    .nav-menu {
       display: flex;
-      gap: 24px;
+      gap: 28px;
 
-      @media (max-width: 992px) {
+      @media (max-width: 900px) {
         display: none;
       }
 
       a {
-        color: #d1d5db;
-        text-decoration: none;
-        font-size: 0.9rem;
+        color: #374151;
         font-weight: 500;
+        font-size: 0.95rem;
+        text-decoration: none;
+        padding: 4px 0;
+        position: relative;
         transition: color 0.2s;
 
         &:hover {
-          color: $taxi-gold-light;
+          color: #111827;
+        }
+
+        &.active {
+          color: #111827;
+          font-weight: 700;
+
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 100%;
+            height: 2.5px;
+            background: #111827;
+            border-radius: 2px;
+          }
         }
       }
     }
 
-    .header-actions {
+    .nav-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
 
-      .logged-actions, .guest-actions {
+      .guest-action-group, .user-action-group {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
       }
     }
   }
 
-  // Hero Section
-  .marlin-hero {
-    position: relative;
+  // 2. Hero Section
+  .rapido-hero-section {
     padding: 60px 24px 80px;
-    background: radial-gradient(circle at 75% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-                $taxi-dark;
+    background: #ffffff;
 
-    .hero-content-wrapper {
-      max-width: 1280px;
+    .hero-container {
+      max-width: 1240px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 40px;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 50px;
       align-items: center;
 
       @media (max-width: 992px) {
         grid-template-columns: 1fr;
+        gap: 40px;
       }
     }
 
-    .hero-left {
-      .hero-badge {
-        display: inline-block;
-        background: rgba($taxi-gold, 0.12);
-        border: 1px solid rgba($taxi-gold, 0.35);
-        border-radius: 30px;
-        padding: 6px 16px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: $taxi-gold-light;
-        margin-bottom: 20px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .hero-title {
-        font-size: 3.2rem;
+    .hero-left-column {
+      .hero-heading {
+        font-family: $font-headings;
+        font-size: 3.8rem;
         font-weight: 800;
         line-height: 1.15;
+        color: #111827;
         letter-spacing: -0.03em;
-        margin-bottom: 18px;
-        color: #fff;
+        margin-bottom: 14px;
 
         @media (max-width: 768px) {
-          font-size: 2.3rem;
-        }
-
-        .highlight-yellow {
-          background: linear-gradient(135deg, $taxi-gold-light, $taxi-gold);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          font-size: 2.8rem;
         }
       }
 
-      .hero-subtitle {
-        font-size: 1.05rem;
-        color: #9ca3af;
-        line-height: 1.6;
-        margin-bottom: 28px;
-        max-width: 540px;
-      }
-
-      .hero-feature-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
+      .hero-tagline {
+        font-size: 1.25rem;
+        color: #6b7280;
         margin-bottom: 35px;
-
-        .tag-item {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 0.85rem;
-          color: #e5e7eb;
-        }
+        font-weight: 400;
       }
 
-      .hero-stats-row {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-
-        .stat-box {
-          display: flex;
-          flex-direction: column;
-
-          strong {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: $taxi-gold-light;
-          }
-
-          span {
-            font-size: 0.8rem;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-          }
-        }
-
-        .stat-separator {
-          width: 1px;
-          height: 35px;
-          background: rgba(255, 255, 255, 0.1);
-        }
-      }
-    }
-
-    // Floating Marlin Booking Widget Card
-    .booking-widget-card {
-      background: $taxi-card-bg;
-      border: 1px solid rgba($taxi-gold, 0.35);
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba($taxi-gold, 0.15);
-
-      .widget-header {
-        margin-bottom: 20px;
-
-        h3 {
-          font-size: 1.4rem;
-          font-weight: 700;
-          color: #fff;
-        }
-
-        p {
-          font-size: 0.82rem;
-          color: #9ca3af;
-        }
-      }
-
-      .vehicle-tab-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        margin-bottom: 18px;
-
-        .tab-btn {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-          padding: 8px 4px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-          color: #d1d5db;
-          font-size: 0.78rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-
-          span {
-            font-size: 1.3rem;
-          }
-
-          &.active {
-            background: rgba($taxi-gold, 0.18);
-            border-color: $taxi-gold;
-            color: $taxi-gold-light;
-            box-shadow: 0 0 12px rgba($taxi-gold, 0.3);
-          }
-        }
-      }
-
-      .widget-form {
+      .rapido-booking-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.06);
+        max-width: 480px;
         display: flex;
         flex-direction: column;
         gap: 14px;
 
-        .input-field-group {
+        .input-row {
           display: flex;
-          flex-direction: column;
-          gap: 6px;
+          align-items: center;
+          gap: 12px;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 13px 16px;
+          background: #ffffff;
+          transition: border-color 0.2s;
 
-          label {
-            font-size: 0.76rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #d1d5db;
+          &:focus-within {
+            border-color: $rapido-yellow;
+            box-shadow: 0 0 0 2px rgba(253, 184, 19, 0.2);
           }
 
-          input, select {
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 10px;
-            padding: 11px 14px;
-            color: #fff;
-            font-size: 0.9rem;
-            transition: border-color 0.2s;
+          .input-icon-dot {
+            color: #111827;
+            font-size: 1.1rem;
+          }
 
-            &:focus {
-              outline: none;
-              border-color: $taxi-gold;
+          .input-icon-ring {
+            color: #6b7280;
+            font-size: 1.1rem;
+          }
+
+          input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 0.95rem;
+            color: #111827;
+            background: transparent;
+
+            &::placeholder {
+              color: #9ca3af;
+            }
+          }
+        }
+
+        .btn-rapido-book-full {
+          background: $rapido-yellow;
+          color: #111827;
+          font-weight: 800;
+          font-size: 1.15rem;
+          padding: 16px;
+          border-radius: 12px;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 14px rgba(253, 184, 19, 0.35);
+
+          &:hover {
+            background: $rapido-yellow-hover;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(253, 184, 19, 0.5);
+          }
+        }
+      }
+    }
+
+    // Hero Graphic on the Right
+    .hero-right-column {
+      display: flex;
+      justify-content: center;
+
+      .hero-image-card {
+        position: relative;
+        width: 100%;
+        max-width: 520px;
+        background: #f0f7ff;
+        border-radius: 28px;
+        padding: 40px 30px;
+        min-height: 420px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid #e0eeff;
+
+        .city-backdrop {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-around;
+          padding-bottom: 80px;
+          opacity: 0.35;
+          pointer-events: none;
+
+          .building {
+            background: #93c5fd;
+            border-radius: 4px 4px 0 0;
+
+            &.b1 { width: 45px; height: 180px; }
+            &.b2 { width: 60px; height: 240px; }
+            &.b3 { width: 50px; height: 200px; }
+            &.b4 { width: 65px; height: 160px; }
+          }
+        }
+
+        .fleet-illustration-wrapper {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: flex-end;
+          gap: 12px;
+
+          // CSS Styled Vehicle Visuals
+          .fleet-vehicle {
+            position: relative;
+            background: #ffffff;
+            border: 2px solid #111827;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+          }
+
+          .bike-visual {
+            width: 110px;
+            height: 120px;
+            background: #fef08a;
+            border-radius: 18px 18px 8px 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+
+            .driver-helmet {
+              width: 36px;
+              height: 36px;
+              background: $rapido-yellow;
+              border: 3px solid #111827;
+              border-radius: 50%;
+            }
+
+            .bike-body {
+              font-size: 0.72rem;
+              font-weight: 900;
+              color: #111827;
+              background: #fff;
+              padding: 2px 6px;
+              border-radius: 4px;
+            }
+
+            .wheel {
+              width: 28px;
+              height: 28px;
+              border: 4px solid #111827;
+              border-radius: 50%;
+              background: #d1d5db;
             }
           }
 
-          .quick-presets {
+          .auto-visual {
+            width: 140px;
+            height: 150px;
+            background: #dcfce7;
+            border: 3px solid #111827;
+            border-radius: 20px 20px 10px 10px;
+            padding: 12px;
             display: flex;
-            gap: 6px;
-            margin-top: 4px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
 
-            span {
-              font-size: 0.72rem;
-              background: rgba(255, 255, 255, 0.05);
+            .auto-hood {
+              width: 100%;
+              height: 24px;
+              background: $rapido-yellow;
+              border-radius: 10px 10px 0 0;
+            }
+
+            .auto-cabin {
+              width: 100%;
+              text-align: center;
+
+              .windshield {
+                width: 100%;
+                height: 45px;
+                background: #e0f2fe;
+                border: 2px solid #111827;
+                border-radius: 6px;
+                margin-bottom: 6px;
+              }
+
+              .auto-badge {
+                font-size: 0.72rem;
+                font-weight: 800;
+                background: #111827;
+                color: #fff;
+                padding: 2px 8px;
+                border-radius: 4px;
+              }
+            }
+          }
+
+          .cab-visual {
+            width: 150px;
+            height: 135px;
+            background: #ffffff;
+            border: 3px solid #111827;
+            border-radius: 22px 22px 10px 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+
+            .cab-roof-sign {
+              background: $rapido-yellow;
+              color: #111827;
+              font-size: 0.65rem;
+              font-weight: 900;
               padding: 2px 8px;
               border-radius: 4px;
-              color: #9ca3af;
-              cursor: pointer;
-              transition: all 0.15s;
+              border: 2px solid #111827;
+            }
 
-              &:hover {
-                background: rgba($taxi-gold, 0.2);
-                color: $taxi-gold-light;
+            .cab-glass {
+              width: 90%;
+              height: 38px;
+              background: #dbeafe;
+              border: 2px solid #111827;
+              border-radius: 6px;
+            }
+
+            .cab-body {
+              .cab-badge {
+                font-size: 0.72rem;
+                font-weight: 800;
+                color: #111827;
               }
             }
           }
         }
-
-        .dual-inputs-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-
-        .quick-fare-box {
-          background: rgba(34, 197, 94, 0.12);
-          border: 1px solid rgba(34, 197, 94, 0.35);
-          border-radius: 10px;
-          padding: 10px 14px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-
-          .fare-left {
-            display: flex;
-            flex-direction: column;
-
-            .fare-title {
-              font-size: 0.85rem;
-              font-weight: 600;
-              color: #fff;
-            }
-
-            .fare-tag {
-              font-size: 0.72rem;
-              color: #4ade80;
-            }
-          }
-
-          .fare-amount {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: #4ade80;
-          }
-        }
-
-        .widget-actions {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          margin-top: 4px;
-        }
       }
     }
   }
 
-  // Stats Strip
-  .marlin-stats-strip {
-    background: #0d101d;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 30px 24px;
+  // 3. Our Services Section (Exact Match to Image 3)
+  .rapido-services-section {
+    padding: 70px 24px 80px;
+    background: #ffffff;
 
-    .strip-container {
-      max-width: 1280px;
+    .services-container {
+      max-width: 1240px;
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
-
-      @media (max-width: 992px) {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      @media (max-width: 576px) {
-        grid-template-columns: 1fr;
-      }
     }
 
-    .strip-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-
-      .icon {
-        font-size: 2rem;
-        background: rgba($taxi-gold, 0.12);
-        padding: 10px;
-        border-radius: 12px;
-        border: 1px solid rgba($taxi-gold, 0.3);
-      }
-
-      h4 {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #fff;
-        margin-bottom: 2px;
-      }
-
-      p {
-        font-size: 0.78rem;
-        color: #9ca3af;
-        line-height: 1.3;
-      }
-    }
-  }
-
-  // Fleet Section
-  .marlin-fleet-section {
-    padding: 80px 24px;
-    max-width: 1280px;
-    margin: 0 auto;
-
-    .section-header {
-      text-align: center;
-      margin-bottom: 50px;
-
-      .sub-title {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: $taxi-gold;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-      }
+    .services-header {
+      margin-bottom: 40px;
 
       h2 {
-        font-size: 2.4rem;
+        font-family: $font-headings;
+        font-size: 2.3rem;
         font-weight: 800;
-        color: #fff;
-        margin: 8px 0;
-      }
-
-      p {
-        font-size: 0.95rem;
-        color: #9ca3af;
-        max-width: 600px;
-        margin: 0 auto;
-      }
-    }
-
-    .fleet-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
-
-      @media (max-width: 1100px) {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      @media (max-width: 600px) {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .fleet-card {
-      background: rgba(18, 22, 36, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.3s ease;
-
-      &:hover {
-        border-color: rgba($taxi-gold, 0.5);
-        transform: translateY(-6px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 20px rgba($taxi-gold, 0.15);
-      }
-
-      .card-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 14px;
-
-        .fleet-badge {
-          font-size: 0.72rem;
-          font-weight: 700;
-          color: $taxi-gold-light;
-          background: rgba($taxi-gold, 0.15);
-          padding: 3px 8px;
-          border-radius: 6px;
-          text-transform: uppercase;
-        }
-
-        .vehicle-big-icon {
-          font-size: 2.4rem;
-        }
-      }
-
-      .car-name {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #fff;
-        margin-bottom: 6px;
-      }
-
-      .car-desc {
-        font-size: 0.8rem;
-        color: #9ca3af;
-        line-height: 1.4;
-        margin-bottom: 16px;
-      }
-
-      .car-specs {
-        display: flex;
-        gap: 14px;
-        font-size: 0.8rem;
-        color: #d1d5db;
-        margin-bottom: 14px;
-        padding: 8px 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      }
-
-      .car-features-list {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-bottom: 20px;
-
-        .feature-pill {
-          font-size: 0.78rem;
-          color: #9ca3af;
-        }
-      }
-
-      .card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 14px;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-
-        .price-tag {
-          display: flex;
-          flex-direction: column;
-
-          .rate {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: $taxi-gold-light;
-          }
-
-          .base-note {
-            font-size: 0.7rem;
-            color: #9ca3af;
-          }
-        }
-      }
-    }
-  }
-
-  // Differentiating Advantages
-  .marlin-features-section {
-    padding: 80px 24px;
-    background: #0c0f1a;
-
-    .section-header {
-      text-align: center;
-      margin-bottom: 50px;
-
-      .sub-title {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: $taxi-gold;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-      }
-
-      h2 {
-        font-size: 2.4rem;
-        font-weight: 800;
-        color: #fff;
-        margin: 8px 0;
-      }
-
-      p {
-        font-size: 0.95rem;
-        color: #9ca3af;
-        max-width: 600px;
-        margin: 0 auto;
-      }
-    }
-
-    .features-grid {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-
-      @media (max-width: 992px) {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      @media (max-width: 600px) {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .feature-box {
-      padding: 28px;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      background: rgba(18, 22, 34, 0.6);
-      transition: all 0.3s ease;
-
-      &:hover {
-        border-color: rgba($taxi-gold, 0.4);
-        transform: translateY(-4px);
-      }
-
-      .feature-icon {
-        font-size: 2.2rem;
-        margin-bottom: 14px;
-      }
-
-      h3 {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #fff;
+        color: #111827;
         margin-bottom: 8px;
       }
 
-      p {
-        font-size: 0.85rem;
-        color: #9ca3af;
-        line-height: 1.5;
+      .yellow-underline-bar {
+        width: 55px;
+        height: 4px;
+        background: $rapido-yellow;
+        border-radius: 2px;
+      }
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
+
+      @media (max-width: 1024px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (max-width: 560px) {
+        grid-template-columns: 1fr;
+      }
+
+      .service-card {
+        background: #f4f5f7;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 200px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+
+        &:hover {
+          background: #ffffff;
+          border-color: $rapido-yellow;
+          transform: translateY(-4px);
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+        }
+
+        .service-text {
+          h3 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 4px;
+          }
+
+          p {
+            font-size: 0.88rem;
+            color: #6b7280;
+            line-height: 1.35;
+            margin-bottom: 12px;
+          }
+
+          .service-price-pill {
+            display: inline-block;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #111827;
+          }
+        }
+
+        .service-graphic {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 10px;
+
+          .service-svg {
+            width: 100px;
+            height: 65px;
+            transition: transform 0.2s ease;
+          }
+        }
+
+        &:hover .service-svg {
+          transform: scale(1.05);
+        }
       }
     }
   }
 
-  // Steps Section
-  .marlin-steps-section {
-    padding: 80px 24px;
-    max-width: 1280px;
-    margin: 0 auto;
+  // 4. Safety & Trust Section
+  .rapido-safety-section {
+    padding: 70px 24px;
+    background: #f9fafb;
+    border-top: 1px solid #f3f4f6;
 
-    .section-header {
-      text-align: center;
-      margin-bottom: 50px;
+    .safety-container {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
 
-      .sub-title {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: $taxi-gold;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-      }
+    .services-header {
+      margin-bottom: 40px;
 
       h2 {
-        font-size: 2.4rem;
-        font-weight: 800;
-        color: #fff;
-      }
-    }
-
-    .steps-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-
-      @media (max-width: 768px) {
-        flex-direction: column;
-      }
-    }
-
-    .step-card {
-      background: rgba(18, 22, 34, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 30px;
-      flex: 1;
-      text-align: center;
-
-      .step-number {
         font-family: $font-headings;
-        font-size: 2.4rem;
-        font-weight: 900;
-        color: $taxi-gold-light;
+        font-size: 2.3rem;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 8px;
+      }
+
+      .yellow-underline-bar {
+        width: 55px;
+        height: 4px;
+        background: $rapido-yellow;
+        border-radius: 2px;
         margin-bottom: 12px;
       }
 
-      h4 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #fff;
-        margin-bottom: 8px;
-      }
-
-      p {
-        font-size: 0.85rem;
-        color: #9ca3af;
-        line-height: 1.4;
+      .sub-desc {
+        color: #6b7280;
+        font-size: 1rem;
       }
     }
 
-    .step-arrow {
-      font-size: 1.8rem;
-      color: rgba($taxi-gold, 0.4);
+    .safety-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
 
-      @media (max-width: 768px) {
-        display: none;
+      @media (max-width: 992px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (max-width: 560px) {
+        grid-template-columns: 1fr;
+      }
+
+      .safety-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 26px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+
+        .safety-icon-circle {
+          font-size: 2rem;
+          margin-bottom: 14px;
+        }
+
+        h3 {
+          font-size: 1.15rem;
+          font-weight: 800;
+          color: #111827;
+          margin-bottom: 8px;
+        }
+
+        p {
+          font-size: 0.88rem;
+          color: #6b7280;
+          line-height: 1.5;
+        }
       }
     }
   }
 
-  // Driver Banner
-  .marlin-driver-banner {
-    padding: 40px 24px 80px;
-    max-width: 1280px;
-    margin: 0 auto;
+  // 5. How It Works Section
+  .rapido-steps-section {
+    padding: 70px 24px 80px;
+    background: #ffffff;
 
-    .driver-banner-card {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(15, 18, 30, 0.95));
-      border: 1px solid rgba($taxi-gold, 0.4);
-      border-radius: 20px;
-      padding: 45px;
+    .steps-container {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+
+    .services-header {
+      margin-bottom: 40px;
+
+      h2 {
+        font-family: $font-headings;
+        font-size: 2.3rem;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 8px;
+      }
+
+      .yellow-underline-bar {
+        width: 55px;
+        height: 4px;
+        background: $rapido-yellow;
+        border-radius: 2px;
+      }
+    }
+
+    .steps-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .step-item {
+        flex: 1;
+
+        .step-badge {
+          width: 44px;
+          height: 44px;
+          background: $rapido-yellow;
+          color: #111827;
+          border-radius: 50%;
+          font-weight: 900;
+          font-size: 1.3rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 14px;
+        }
+
+        h4 {
+          font-size: 1.2rem;
+          font-weight: 800;
+          color: #111827;
+          margin-bottom: 6px;
+        }
+
+        p {
+          font-size: 0.9rem;
+          color: #6b7280;
+          line-height: 1.4;
+        }
+      }
+
+      .step-connector {
+        flex: 0 0 40px;
+        height: 2px;
+        background: #e5e7eb;
+
+        @media (max-width: 768px) {
+          display: none;
+        }
+      }
+    }
+  }
+
+  // 6. Driver Recruitment Banner
+  .rapido-driver-cta {
+    padding: 0 24px 80px;
+    background: #ffffff;
+
+    .driver-cta-container {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+
+    .driver-cta-card {
+      background: #111827;
+      color: #ffffff;
+      border-radius: 24px;
+      padding: 48px;
       display: grid;
       grid-template-columns: 1.3fr 0.7fr;
       gap: 40px;
       align-items: center;
 
-      @media (max-width: 900px) {
+      @media (max-width: 860px) {
         grid-template-columns: 1fr;
-        padding: 30px;
+        padding: 32px;
       }
-    }
 
-    .banner-left {
-      .sub-badge {
+      .cta-pill {
+        display: inline-block;
+        background: rgba(253, 184, 19, 0.2);
+        color: $rapido-yellow;
         font-size: 0.75rem;
         font-weight: 800;
-        color: $taxi-gold-light;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.08em;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        margin-bottom: 12px;
       }
 
       h2 {
-        font-size: 2.2rem;
+        font-size: 2.4rem;
         font-weight: 800;
-        color: #fff;
-        margin: 10px 0;
+        line-height: 1.2;
+        margin-bottom: 12px;
       }
 
       p {
-        font-size: 0.95rem;
-        color: #d1d5db;
+        font-size: 1rem;
+        color: #9ca3af;
         line-height: 1.5;
-        margin-bottom: 18px;
+        margin-bottom: 20px;
       }
 
-      .driver-perks {
+      .cta-benefits {
         display: flex;
         flex-wrap: wrap;
-        gap: 14px;
-        margin-bottom: 24px;
-        font-size: 0.85rem;
-        font-weight: 600;
+        gap: 16px;
+        font-size: 0.88rem;
         color: #4ade80;
+        font-weight: 600;
+        margin-bottom: 28px;
       }
-    }
 
-    .banner-right {
-      display: flex;
-      justify-content: center;
+      .cta-image-wrapper {
+        display: flex;
+        justify-content: center;
 
-      .earnings-preview-card {
-        background: rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba($taxi-gold, 0.3);
-        border-radius: 16px;
-        padding: 24px;
-        text-align: center;
-        width: 100%;
-        max-width: 320px;
+        .earnings-badge {
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 18px;
+          padding: 26px;
+          text-align: center;
+          width: 100%;
+          max-width: 320px;
 
-        .preview-label {
-          font-size: 0.8rem;
-          color: #9ca3af;
-          text-transform: uppercase;
-        }
+          .lbl {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+          }
 
-        .preview-amount {
-          display: block;
-          font-size: 2.4rem;
-          font-weight: 900;
-          color: $taxi-gold-light;
-          margin: 6px 0;
-        }
+          .amt {
+            display: block;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: $rapido-yellow;
+            margin: 6px 0;
+          }
 
-        .preview-sub {
-          font-size: 0.72rem;
-          color: #9ca3af;
+          .sub {
+            font-size: 0.75rem;
+            color: #9ca3af;
+          }
         }
       }
     }
   }
 
-  // Footer
-  .marlin-footer {
-    background: #06080e;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  // 7. Footer
+  .rapido-footer {
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
     padding: 60px 24px 30px;
 
-    .footer-container {
-      max-width: 1280px;
+    .footer-inner {
+      max-width: 1240px;
       margin: 0 auto;
       display: grid;
       grid-template-columns: 1.5fr 1fr 1fr 1fr;
-      gap: 30px;
+      gap: 35px;
       margin-bottom: 40px;
 
-      @media (max-width: 900px) {
+      @media (max-width: 860px) {
         grid-template-columns: 1fr 1fr;
       }
 
@@ -2042,55 +2049,50 @@ $taxi-card-bg: rgba(15, 18, 30, 0.85);
       }
     }
 
-    .footer-col {
+    .footer-brand-box {
+      p {
+        font-size: 0.9rem;
+        color: #6b7280;
+        line-height: 1.5;
+        margin: 16px 0;
+      }
+
+      .copy {
+        font-size: 0.78rem;
+        color: #9ca3af;
+      }
+    }
+
+    .footer-links-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+
       h5 {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #fff;
-        margin-bottom: 14px;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 6px;
+      }
+
+      a {
+        color: #6b7280;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.15s;
+
+        &:hover {
+          color: #111827;
+        }
       }
 
       p {
-        font-size: 0.85rem;
-        color: #9ca3af;
-        line-height: 1.5;
-        margin-bottom: 8px;
-      }
-
-      ul {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-
-        li a {
-          color: #9ca3af;
-          text-decoration: none;
-          font-size: 0.85rem;
-          transition: color 0.2s;
-
-          &:hover {
-            color: $taxi-gold-light;
-          }
-        }
-      }
-
-      &.brand-col {
-        .footer-logo {
-          font-family: $font-headings;
-          font-size: 1.4rem;
-          font-weight: 800;
-          color: #fff;
-          margin-bottom: 10px;
-        }
-
-        .copyright-text {
-          font-size: 0.75rem;
-          color: #6b7280;
-          margin-top: 20px;
-        }
+        font-size: 0.88rem;
+        color: #6b7280;
+        line-height: 1.4;
       }
     }
   }
 }
+
 

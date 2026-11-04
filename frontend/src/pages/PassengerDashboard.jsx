@@ -733,7 +733,7 @@ export default function PassengerDashboard() {
                             ℹ️ No driver pre-committed for this corridor yet.
                           </div>
                           <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px' }}>
-                            Zero phantom bookings: No upfront fees charged. Standard spot dispatch will apply for your return.
+                            No upfront fees charged. Standard on-demand booking will be available for your return.
                           </div>
                         </div>
                       )}
@@ -809,12 +809,12 @@ export default function PassengerDashboard() {
               </div>
             )}
 
-            {/* Bilateral Return Trip Locked Forward Contract Confirmation */}
+            {/* Guaranteed Return Trip Confirmation */}
             {(lockedReturnRide || ride.isReturnLocked) && (
               <div style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.35)', borderRadius: '10px', padding: '10px 12px', fontSize: '0.82rem', color: '#c7d2fe' }} className="animate-slide">
-                <div>🛡️ <strong>Bilateral Forward Contract:</strong> Return Trip Locked!</div>
+                <div>🛡️ <strong>Guaranteed Return Ride:</strong> Trip Locked!</div>
                 <div style={{ fontSize: '0.75rem', color: '#a5b4fc', marginTop: '3px' }}>
-                  A guaranteed return driver is locked for <strong>{lockedReturnRide?.returnScheduledTime || 'Tonight'}</strong> at <strong>₹{lockedReturnRide?.fare || 350}</strong> (0% Surge Shield).
+                  A verified driver is locked for your return at <strong>{lockedReturnRide?.returnScheduledTime || 'Tonight'}</strong> at <strong>₹{lockedReturnRide?.fare || 350}</strong> (0% Surge Guarantee).
                 </div>
               </div>
             )}
