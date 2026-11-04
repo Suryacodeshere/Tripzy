@@ -28,7 +28,7 @@ export default function AdminDashboard() {
       });
       const ridesData = await ridesRes.json();
 
-      if (usersRes.ok && ridesRes.ok) {
+      if (usersRes.ok && ridesRes.ok && Array.isArray(usersData) && Array.isArray(ridesData)) {
         setUsers(usersData);
         setRides(ridesData);
       } else {

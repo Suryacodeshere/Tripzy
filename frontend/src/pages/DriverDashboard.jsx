@@ -105,23 +105,29 @@ export default function DriverDashboard() {
   };
 
   const fetchActiveRide = async () => {
+    if (!token) return;
     try {
       const res = await fetch('/api/rides/history', {
         headers: { Authorization: `Bearer ${token}` }
       });
+      if (!res.ok) return;
       const history = await res.json();
+      if (!Array.isArray(history)) return;
+
       const active = history.find(r => ['accepted', 'arrived', 'started', 'completed'].includes(r.status));
       if (active) {
         setActiveRide(active);
         
         // Fetch full ride details to load route geometry
-        const detailsRes = await fetch(`/api/rides/${active._id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const details = await detailsRes.json();
-        if (details.routeGeometry) {
-          setRouteGeometry(details.routeGeometry);
-        }
+        try {
+          const detailsRes = await fetch(`/api/rides/${active._id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const details = await detailsRes.json();
+          if (details.routeGeometry) {
+            setRouteGeometry(details.routeGeometry);
+          }
+        } catch (e) {}
 
         if (socket) {
           socket.emit('ride:join', { rideId: active._id });
@@ -146,26 +152,32 @@ export default function DriverDashboard() {
     setIsOnline(nextState);
 
     try {
-      // Toggle backend online status
-      const res = await fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
+      // Synchronize driver online/offline status in the backend database
+      const res = await fetch('/api/auth/driver-status', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          isOnline: nextState,
+          coordinates: driverCoords
+        })
       });
-      const meData = await res.json();
+      const data = await res.json();
 
-      const profileUpdate = {
-        ...meData.driverProfile,
-        isOnline: nextState
-      };
-      setDriverProfile(profileUpdate);
-      localStorage.setItem('tripzy_driver_profile', JSON.stringify(profileUpdate));
-
-      if (nextState) {
-        startLocationTracking();
-      } else {
-        stopLocationTracking();
+      if (res.ok && data.driverProfile) {
+        setDriverProfile(data.driverProfile);
+        localStorage.setItem('tripzy_driver_profile', JSON.stringify(data.driverProfile));
       }
     } catch (err) {
       console.error('Toggle online status error:', err);
+    }
+
+    if (nextState) {
+      startLocationTracking();
+    } else {
+      stopLocationTracking();
     }
   };
 

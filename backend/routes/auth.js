@@ -11,7 +11,7 @@ export function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
+  if (!token || token === 'null' || token === 'undefined') {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
@@ -203,6 +203,36 @@ router.get('/users', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Fetch all users error:', error);
     res.status(500).json({ message: 'Server error fetching users.' });
+  }
+});
+
+// PATCH /api/auth/driver-status (Driver online/offline and position sync)
+router.patch('/driver-status', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'driver') {
+    return res.status(403).json({ message: 'Only drivers can update driver status.' });
+  }
+
+  const { isOnline, coordinates } = req.body;
+  const updateData = {};
+  if (typeof isOnline === 'boolean') {
+    updateData.isOnline = isOnline;
+  }
+  if (coordinates && Array.isArray(coordinates) && coordinates.length === 2) {
+    updateData.currentLoc = {
+      type: 'Point',
+      coordinates
+    };
+  }
+
+  try {
+    const updatedProfile = await dbService.updateDriverProfile(req.user.userId, updateData);
+    res.json({
+      message: 'Driver status updated successfully',
+      driverProfile: updatedProfile
+    });
+  } catch (error) {
+    console.error('Update driver status error:', error);
+    res.status(500).json({ message: 'Server error updating driver status.' });
   }
 });
 

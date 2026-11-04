@@ -107,8 +107,8 @@ async function getRouteDetails(pickupCoords, dropCoords) {
   };
 }
 
-// POST /api/rides/estimate (Route preview without creating a ride)
-router.post('/estimate', authenticateToken, async (req, res) => {
+// POST /api/rides/estimate (Route preview without creating a ride - Public)
+router.post('/estimate', async (req, res) => {
   const { pickupLoc, dropLoc } = req.body;
 
   if (!pickupLoc || !pickupLoc.coordinates || !dropLoc || !dropLoc.coordinates) {
@@ -200,10 +200,15 @@ router.post('/', authenticateToken, async (req, res) => {
     // Find online drivers within 3km of pickup and notify them in real-time
     try {
       const nearbyDrivers = await dbService.findNearbyDrivers(pickupLoc.coordinates, 3);
-      nearbyDrivers.forEach(driver => {
-        const driverId = driver.userId._id || driver.userId;
-        socketEmitter.notifyDriverOfRideRequest(driverId.toString(), rideResponse);
-      });
+      if (nearbyDrivers.length > 0) {
+        nearbyDrivers.forEach(driver => {
+          const driverId = driver.userId._id || driver.userId;
+          socketEmitter.notifyDriverOfRideRequest(driverId.toString(), rideResponse);
+        });
+      } else {
+        // Fallback: Notify all active drivers in the driver pool
+        socketEmitter.notifyAllDrivers(rideResponse);
+      }
     } catch (driverErr) {
       console.error('Error finding and notifying nearby drivers:', driverErr);
     }
@@ -339,8 +344,8 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
     // Safety OTP verification before starting trip
     if (status === 'started' && ride.startOtp) {
       const providedOtp = (req.body.otp || '').toString().trim();
-      if (providedOtp && providedOtp !== ride.startOtp.toString().trim()) {
-        return res.status(400).json({ message: 'Invalid 4-digit Security PIN. Please ask the passenger for the correct PIN.' });
+      if (!providedOtp || providedOtp !== ride.startOtp.toString().trim()) {
+        return res.status(400).json({ message: 'Invalid or missing 4-digit Security PIN. Please ask the passenger for their PIN.' });
       }
     }
 
@@ -552,8 +557,8 @@ router.post('/return-lock/commit', authenticateToken, async (req, res) => {
   }
 });
 
-// POST /api/rides/return-lock/check (Rider queries if a driver pre-committed for their return corridor)
-router.post('/return-lock/check', authenticateToken, async (req, res) => {
+// POST /api/rides/return-lock/check (Rider queries if a driver pre-committed for their return corridor - Public)
+router.post('/return-lock/check', async (req, res) => {
   const { returnPickupAddress, returnDropAddress } = req.body;
 
   try {

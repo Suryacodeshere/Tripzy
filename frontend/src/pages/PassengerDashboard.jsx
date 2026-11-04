@@ -1,10 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, getSocket } from '../App.jsx';
 import Map from '../components/Map.jsx';
 
 export default function PassengerDashboard() {
-  const { user, token } = useAuth();
+  const { user, token, login } = useAuth();
   const socket = getSocket();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Redirect driver users to driver dashboard
+  useEffect(() => {
+    if (user?.role === 'driver') {
+      navigate('/driver', { replace: true });
+    }
+  }, [user, navigate]);
 
   // Route positions
   const [pickupLoc, setPickupLoc] = useState(null);
@@ -45,22 +55,85 @@ export default function PassengerDashboard() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
+  
+  // Auth Modal for unauthenticated ride requests
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authPhone, setAuthPhone] = useState('');
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Refs for debouncing geocoding queries
   const debounceTimeout = useRef(null);
 
+  // Initialize trip state from landing page navigation
+  useEffect(() => {
+    const initTripFromState = async () => {
+      if (!location.state) return;
+      const { pickupAddress: pAddr, dropAddress: dAddr, pickupLoc: pLoc, dropLoc: dLoc, vehicleType } = location.state;
+      if (vehicleType) setSelectedVehicle(vehicleType);
+
+      let finalPLoc = pLoc;
+      let finalDLoc = dLoc;
+
+      if (pAddr) setPickupAddress(pAddr);
+      if (dAddr) setDropAddress(dAddr);
+
+      // Auto-geocode if addresses exist but coordinates were not passed
+      if (!finalPLoc && pAddr) {
+        try {
+          const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(pAddr)}`);
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            finalPLoc = { type: 'Point', coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)] };
+            setPickupLoc(finalPLoc);
+          }
+        } catch (e) {}
+      } else if (finalPLoc) {
+        setPickupLoc(finalPLoc);
+      }
+
+      if (!finalDLoc && dAddr) {
+        try {
+          const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(dAddr)}`);
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            finalDLoc = { type: 'Point', coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)] };
+            setDropLoc(finalDLoc);
+          }
+        } catch (e) {}
+      } else if (finalDLoc) {
+        setDropLoc(finalDLoc);
+      }
+
+      // If both coordinates available, immediately trigger route calculation
+      if (finalPLoc && finalDLoc) {
+        calculateRoute(finalPLoc, finalDLoc);
+      }
+    };
+
+    initTripFromState();
+  }, [location.state]);
+
   // Fetch active rides / restore state on mount
   useEffect(() => {
-    fetchActiveRide();
+    if (token) {
+      fetchActiveRide();
+    }
     fetchNearbyDriversList();
-  }, []);
+  }, [token]);
 
   // Set up WebSocket event listeners
   useEffect(() => {
     if (!socket) return;
 
-    // Join user room on mount
-    socket.emit('auth:join', { userId: user.id, role: 'passenger', name: user.name });
+    // Join user room on mount if authenticated
+    if (user && user.id) {
+      socket.emit('auth:join', { userId: user.id, role: 'passenger', name: user.name });
+    }
 
     // 1. Listen for real-time ride status transitions
     socket.on('ride:status_changed', (data) => {
@@ -119,7 +192,7 @@ export default function PassengerDashboard() {
       socket.off('location:update');
       socket.off('driver:location_changed');
     };
-  }, [socket]);
+  }, [socket, user]);
 
   // Sync route calculations when pickup & drop locations are filled
   useEffect(() => {
@@ -132,11 +205,15 @@ export default function PassengerDashboard() {
   }, [pickupLoc, dropLoc]);
 
   const fetchActiveRide = async () => {
+    if (!token) return;
     try {
       const res = await fetch('/api/rides/history', {
         headers: { Authorization: `Bearer ${token}` }
       });
+      if (!res.ok) return;
       const history = await res.json();
+      if (!Array.isArray(history)) return;
+
       // Find incomplete ride
       const active = history.find(r => ['requested', 'accepted', 'arrived', 'started', 'completed'].includes(r.status));
       if (active) {
@@ -151,17 +228,18 @@ export default function PassengerDashboard() {
         }
 
         if (active.status === 'accepted' || active.status === 'arrived' || active.status === 'started') {
-          // Attempt to fetch current driver position from profile
-          const detailsRes = await fetch(`/api/rides/${active._id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const details = await detailsRes.json();
-          if (details.driverProfile && details.driverProfile.currentLoc) {
-            setDriverLoc(details.driverProfile.currentLoc);
-          }
-          if (details.routeGeometry) {
-            setRouteGeometry(details.routeGeometry);
-          }
+          try {
+            const detailsRes = await fetch(`/api/rides/${active._id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const details = await detailsRes.json();
+            if (details.driverProfile && details.driverProfile.currentLoc) {
+              setDriverLoc(details.driverProfile.currentLoc);
+            }
+            if (details.routeGeometry) {
+              setRouteGeometry(details.routeGeometry);
+            }
+          } catch (e) {}
         } else if (active.status === 'completed') {
           setShowPaymentModal(true);
         }
@@ -173,15 +251,10 @@ export default function PassengerDashboard() {
 
   const fetchNearbyDriversList = async () => {
     try {
-      // Simulate geolocation or query default nearby drivers
-      const res = await fetch('/api/rides/geocode/search?q=MG Road Bangalore', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await fetch('/api/rides/geocode/search?q=MG Road Bangalore');
       const data = await res.json();
-      if (data.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
         const center = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
-        // Get nearby drivers from backend via socket or mock
-        // Since we are running local, we will simulate a few idle drivers on map load
         setNearbyDrivers([
           {
             userId: 'driver1',
@@ -211,34 +284,66 @@ export default function PassengerDashboard() {
     }
   };
 
-  const calculateRoute = async () => {
+  const computeClientFallbackRoute = (pLoc, dLoc) => {
+    const [lng1, lat1] = pLoc.coordinates;
+    const [lng2, lat2] = dLoc.coordinates;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const dist = +(R * c * 1.3).toFixed(2);
+    const dur = Math.max(5, Math.round(dist * 2.2));
+
+    const fallbackEstimates = {
+      bike: { vehicleType: 'bike', name: 'Tripzy Moto (Bike)', icon: '🛵', capacity: '1 Rider', fare: Math.round(20 + dist * 7 + dur), carbonSavedGrams: Math.round(105 * dist) },
+      auto: { vehicleType: 'auto', name: 'Tripzy Auto', icon: '🛺', capacity: '3 Riders', fare: Math.round(30 + dist * 10 + dur * 1.5), carbonSavedGrams: Math.round(75 * dist) },
+      sedan: { vehicleType: 'sedan', name: 'Tripzy Go (Sedan)', icon: '🚗', capacity: '4 Riders', fare: Math.round(50 + dist * 13 + dur * 2), carbonSavedGrams: Math.round(10 * dist) },
+      suv: { vehicleType: 'suv', name: 'Tripzy Premier (SUV)', icon: '🚙', capacity: '6 Riders', fare: Math.round(75 + dist * 17 + dur * 2.5), carbonSavedGrams: 0 }
+    };
+
+    setDistanceKm(dist);
+    setDurationMin(dur);
+    setRouteGeometry({
+      type: 'LineString',
+      coordinates: [pLoc.coordinates, dLoc.coordinates]
+    });
+    setEstimates(fallbackEstimates);
+    setFare(fallbackEstimates[selectedVehicle]?.fare || fallbackEstimates.sedan.fare);
+  };
+
+  const calculateRoute = async (pLoc = pickupLoc, dLoc = dropLoc) => {
+    if (!pLoc || !dLoc || !pLoc.coordinates || !dLoc.coordinates) return;
     setSearchingRoute(true);
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/rides/estimate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
-          pickupLoc,
-          dropLoc
+          pickupLoc: pLoc,
+          dropLoc: dLoc
         })
       });
       
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.estimates) {
         setDistanceKm(data.distanceKm);
         setDurationMin(data.durationMin);
         setRouteGeometry(data.routeGeometry);
         setEstimates(data.estimates);
-        const currentFare = data.estimates[selectedVehicle]?.fare || data.estimates.sedan.fare;
+        const currentFare = data.estimates[selectedVehicle]?.fare || data.estimates.sedan?.fare || 50;
         setFare(currentFare);
       } else {
-        alert(data.message || 'Route estimation failed.');
+        computeClientFallbackRoute(pLoc, dLoc);
       }
     } catch (err) {
-      console.error('Routing estimate error:', err);
+      console.warn('Routing estimate error, using client fallback:', err);
+      computeClientFallbackRoute(pLoc, dLoc);
     } finally {
       setSearchingRoute(false);
     }
@@ -260,12 +365,12 @@ export default function PassengerDashboard() {
 
     setCheckingReturn(true);
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/rides/return-lock/check', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           returnPickupAddress: dropAddress,
           returnDropAddress: pickupAddress,
@@ -355,16 +460,28 @@ export default function PassengerDashboard() {
   };
 
   const handleRequestRide = async () => {
-    if (!pickupLoc || !dropLoc) return;
+    if (!pickupLoc || !dropLoc) {
+      alert('Please select both pickup and drop-off locations.');
+      return;
+    }
+
+    if (!token || !user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    executeRideBooking(token);
+  };
+
+  const executeRideBooking = async (activeAuthToken) => {
     setRequestingRide(true);
 
     try {
-      // Backend automatically queries database for nearby drivers and triggers socket broadcasts.
       const res = await fetch('/api/rides', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${activeAuthToken || token}`
         },
         body: JSON.stringify({
           pickupLoc,
@@ -389,7 +506,7 @@ export default function PassengerDashboard() {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${activeAuthToken || token}`
               },
               body: JSON.stringify({
                 outboundRideId: data._id,
@@ -417,6 +534,78 @@ export default function PassengerDashboard() {
     } catch (err) {
       console.error('Ride request error:', err);
       setRequestingRide(false);
+    }
+  };
+
+  const handleAuthModalSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+
+    const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+    const payload = isRegisterMode
+      ? { name: authName, email: authEmail, phone: authPhone || '9876543210', password: authPassword, role: 'passenger' }
+      : { email: authEmail, password: authPassword };
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Authentication failed');
+
+      login(data.token, data.user, data.driverProfile);
+      setShowAuthModal(false);
+      executeRideBooking(data.token);
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleQuickDemoPassenger = async () => {
+    setAuthError('');
+    setAuthLoading(true);
+    const demoEmail = 'passenger@tripzy.demo';
+    const demoPassword = 'password123';
+
+    try {
+      let res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: demoEmail, password: demoPassword })
+      });
+      let data = await res.json();
+
+      if (!res.ok) {
+        res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Amit Verma (Passenger)',
+            email: demoEmail,
+            phone: '9876543210',
+            password: demoPassword,
+            role: 'passenger'
+          })
+        });
+        data = await res.json();
+      }
+
+      if (res.ok) {
+        login(data.token, data.user, data.driverProfile);
+        setShowAuthModal(false);
+        executeRideBooking(data.token);
+      } else {
+        throw new Error(data.message || 'Demo login failed');
+      }
+    } catch (e) {
+      setAuthError(e.message);
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -940,6 +1129,113 @@ export default function PassengerDashboard() {
             >
               Submit Feedback
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 1-Click Guest Authentication Modal */}
+      {showAuthModal && (
+        <div className="payment-modal-overlay">
+          <div className="payment-card glass-panel animate-slide" style={{ maxWidth: '440px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0 }}>🚖 Confirm Your Ride</h3>
+              <button
+                type="button"
+                onClick={() => setShowAuthModal(false)}
+                style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '1.2rem' }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <p style={{ color: '#9ca3af', fontSize: '0.88rem', margin: '0 0 16px 0' }}>
+              {isRegisterMode ? 'Create a passenger profile to dispatch your driver' : 'Sign in to dispatch your driver'}
+            </p>
+
+            {authError && (
+              <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', borderRadius: '8px', color: '#fca5a5', fontSize: '0.82rem', marginBottom: '12px' }}>
+                {authError}
+              </div>
+            )}
+
+            <form onSubmit={handleAuthModalSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {isRegisterMode && (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={authName}
+                    onChange={(e) => setAuthName(e.target.value)}
+                    required
+                    style={{ padding: '10px 14px', borderRadius: '8px', background: '#1F2937', border: '1px solid #374151', color: 'white' }}
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Phone Number"
+                    value={authPhone}
+                    onChange={(e) => setAuthPhone(e.target.value)}
+                    style={{ padding: '10px 14px', borderRadius: '8px', background: '#1F2937', border: '1px solid #374151', color: 'white' }}
+                  />
+                </>
+              )}
+
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                required
+                style={{ padding: '10px 14px', borderRadius: '8px', background: '#1F2937', border: '1px solid #374151', color: 'white' }}
+              />
+
+              <input
+                type="password"
+                placeholder="Password"
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                required
+                style={{ padding: '10px 14px', borderRadius: '8px', background: '#1F2937', border: '1px solid #374151', color: 'white' }}
+              />
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="btn btn-taxi"
+                style={{ width: '100%', padding: '12px', marginTop: '6px' }}
+              >
+                {authLoading ? 'Signing In...' : isRegisterMode ? 'Create Account & Book' : 'Sign In & Book Ride'}
+              </button>
+            </form>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', fontSize: '0.82rem', color: '#9CA3AF' }}>
+              <span
+                onClick={() => { setIsRegisterMode(!isRegisterMode); setAuthError(''); }}
+                style={{ color: '#FBBF24', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                {isRegisterMode ? 'Already have an account? Sign In' : 'New to Tripzy? Sign Up'}
+              </span>
+            </div>
+
+            <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={handleQuickDemoPassenger}
+                disabled={authLoading}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: '#374151',
+                  color: '#FBBF24',
+                  border: '1px solid #4B5563',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                ⚡ 1-Click Instant Demo Booking
+              </button>
+            </div>
           </div>
         </div>
       )}

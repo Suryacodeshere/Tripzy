@@ -7,7 +7,7 @@ import PassengerDashboard from './pages/PassengerDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 
-// Override fetch to support backend URL redirection in production
+// Override fetch to support backend URL redirection in production and token expiration recovery
 const originalFetch = window.fetch;
 window.fetch = async (input, init) => {
   if (typeof input === 'string' && input.startsWith('/api')) {
@@ -16,7 +16,27 @@ window.fetch = async (input, init) => {
       input = `${backendUrl.replace(/\/$/, '')}${input}`;
     }
   }
-  return originalFetch(input, init);
+  
+  const response = await originalFetch(input, init);
+
+  // Auto-detect expired or invalid JWT token and trigger session cleanup
+  if (response.status === 401 || response.status === 403) {
+    try {
+      const clone = response.clone();
+      const errData = await clone.json();
+      if (errData && errData.message && errData.message.toLowerCase().includes('token')) {
+        console.warn('⚠️ Stale or invalid JWT token detected. Purging session.');
+        localStorage.removeItem('tripzy_token');
+        localStorage.removeItem('tripzy_user');
+        localStorage.removeItem('tripzy_driver_profile');
+        window.dispatchEvent(new CustomEvent('tripzy:session-expired', { detail: errData.message }));
+      }
+    } catch (e) {
+      // Non-json response
+    }
+  }
+
+  return response;
 };
 
 // 1. Auth Context Creation
@@ -34,28 +54,48 @@ export default function App() {
   const [driverProfile, setDriverProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session from localStorage on mount
+  // Restore session from localStorage on mount and listen for session expiration
   useEffect(() => {
+    const handleSessionExpired = () => {
+      setToken(null);
+      setUser(null);
+      setDriverProfile(null);
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+    window.addEventListener('tripzy:session-expired', handleSessionExpired);
+
     const savedToken = localStorage.getItem('tripzy_token');
     const savedUser = localStorage.getItem('tripzy_user');
     const savedDriverProfile = localStorage.getItem('tripzy_driver_profile');
 
     if (savedToken && savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      if (parsedUser.role === 'rider') {
-        parsedUser.role = 'passenger';
-        localStorage.setItem('tripzy_user', JSON.stringify(parsedUser));
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        if (parsedUser.role === 'rider') {
+          parsedUser.role = 'passenger';
+          localStorage.setItem('tripzy_user', JSON.stringify(parsedUser));
+        }
+        setToken(savedToken);
+        setUser(parsedUser);
+        if (savedDriverProfile) {
+          setDriverProfile(JSON.parse(savedDriverProfile));
+        }
+        
+        // Establish WebSocket
+        connectWebSocket(savedToken, parsedUser, savedDriverProfile ? JSON.parse(savedDriverProfile) : null);
+      } catch (err) {
+        console.error('Failed to parse saved auth profile:', err);
+        localStorage.removeItem('tripzy_token');
+        localStorage.removeItem('tripzy_user');
       }
-      setToken(savedToken);
-      setUser(parsedUser);
-      if (savedDriverProfile) {
-        setDriverProfile(JSON.parse(savedDriverProfile));
-      }
-      
-      // Establish WebSocket
-      connectWebSocket(savedToken, parsedUser, savedDriverProfile ? JSON.parse(savedDriverProfile) : null);
     }
     setLoading(false);
+
+    return () => {
+      window.removeEventListener('tripzy:session-expired', handleSessionExpired);
+    };
   }, []);
 
   const connectWebSocket = (authToken, authUser, authDriverProfile) => {
@@ -173,13 +213,10 @@ export default function App() {
 
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={!token ? <Auth /> : <Navigate to="/" replace />} />
+            <Route path="/login" element={!token ? <Auth /> : <Navigate to={user?.role === 'driver' ? '/driver' : '/passenger'} replace />} />
             
-            <Route path="/passenger" element={
-              <ProtectedRoute allowedRoles={['passenger']}>
-                <PassengerDashboard />
-              </ProtectedRoute>
-            } />
+            {/* Allow route preview for both guests and passengers; auth is verified on ride request */}
+            <Route path="/passenger" element={<PassengerDashboard />} />
 
             <Route path="/driver" element={
               <ProtectedRoute allowedRoles={['driver']}>

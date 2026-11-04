@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App.jsx';
+
+const POPULAR_LOCATIONS = [
+  { name: 'Connaught Place, New Delhi', lat: 28.6304, lon: 77.2177 },
+  { name: 'Indiranagar, Bangalore', lat: 12.9719, lon: 77.6412 },
+  { name: 'MG Road, Bangalore', lat: 12.9756, lon: 77.6068 },
+  { name: 'Delhi Airport (IGI T3)', lat: 28.5562, lon: 77.1000 },
+  { name: 'Cyber Hub, Gurugram', lat: 28.4986, lon: 77.0878 },
+  { name: 'Koramangala, Bangalore', lat: 12.9352, lon: 77.6245 }
+];
 
 export default function LandingPage() {
   const { user, token, logout } = useAuth();
@@ -9,7 +18,14 @@ export default function LandingPage() {
   // Booking Widget State
   const [pickup, setPickup] = useState('');
   const [drop, setDrop] = useState('');
+  const [pickupLoc, setPickupLoc] = useState(null);
+  const [dropLoc, setDropLoc] = useState(null);
   const [selectedService, setSelectedService] = useState('bike');
+  
+  const [suggestions, setSuggestions] = useState([]);
+  const [activeSearch, setActiveSearch] = useState(''); // 'pickup' | 'drop' | ''
+  const [loadingGeocode, setLoadingGeocode] = useState(false);
+  const debounceTimer = useRef(null);
 
   const services = [
     {
@@ -82,14 +98,134 @@ export default function LandingPage() {
     }
   ];
 
-  const handleBookClick = () => {
-    if (!token) {
-      navigate('/login');
-    } else if (user?.role === 'driver') {
-      navigate('/driver');
+  const handleSearchChange = (val, type) => {
+    if (type === 'pickup') {
+      setPickup(val);
+      setPickupLoc(null);
     } else {
-      navigate('/passenger');
+      setDrop(val);
+      setDropLoc(null);
     }
+    setActiveSearch(type);
+
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    if (!val || val.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    debounceTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setSuggestions(data);
+        }
+      } catch (e) {
+        console.error('Landing geocode error:', e);
+      }
+    }, 350);
+  };
+
+  const handleSelectSuggestion = (item, type) => {
+    const coords = {
+      type: 'Point',
+      coordinates: [parseFloat(item.lon), parseFloat(item.lat)]
+    };
+    if (type === 'pickup') {
+      setPickup(item.display_name);
+      setPickupLoc(coords);
+    } else {
+      setDrop(item.display_name);
+      setDropLoc(coords);
+    }
+    setSuggestions([]);
+    setActiveSearch('');
+  };
+
+  const handleQuickPick = (loc) => {
+    const coords = {
+      type: 'Point',
+      coordinates: [loc.lon, loc.lat]
+    };
+    if (!pickup) {
+      setPickup(loc.name);
+      setPickupLoc(coords);
+    } else {
+      setDrop(loc.name);
+      setDropLoc(coords);
+    }
+    setSuggestions([]);
+    setActiveSearch('');
+  };
+
+  const resolveGeocode = async (address) => {
+    try {
+      const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(address)}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return {
+          type: 'Point',
+          coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)]
+        };
+      }
+    } catch (e) {}
+    return {
+      type: 'Point',
+      coordinates: [77.2177, 28.6304]
+    };
+  };
+
+  const handleBookClick = async (overrideService) => {
+    if (user?.role === 'driver') {
+      navigate('/driver');
+      return;
+    }
+
+    setLoadingGeocode(true);
+
+    let finalPickup = pickup.trim();
+    let finalDrop = drop.trim();
+    let finalPickupLoc = pickupLoc;
+    let finalDropLoc = dropLoc;
+
+    if (!finalPickup) {
+      finalPickup = 'Connaught Place, New Delhi';
+      finalPickupLoc = { type: 'Point', coordinates: [77.2177, 28.6304] };
+      setPickup(finalPickup);
+      setPickupLoc(finalPickupLoc);
+    }
+
+    if (!finalDrop) {
+      finalDrop = 'Delhi Airport (IGI T3)';
+      finalDropLoc = { type: 'Point', coordinates: [77.1000, 28.5562] };
+      setDrop(finalDrop);
+      setDropLoc(finalDropLoc);
+    }
+
+    if (!finalPickupLoc) {
+      finalPickupLoc = await resolveGeocode(finalPickup);
+      setPickupLoc(finalPickupLoc);
+    }
+
+    if (!finalDropLoc) {
+      finalDropLoc = await resolveGeocode(finalDrop);
+      setDropLoc(finalDropLoc);
+    }
+
+    setLoadingGeocode(false);
+
+    const vehicleTypeToPass = overrideService || (selectedService === 'cab' ? 'sedan' : selectedService);
+
+    navigate('/passenger', {
+      state: {
+        pickupAddress: finalPickup,
+        dropAddress: finalDrop,
+        pickupLoc: finalPickupLoc,
+        dropLoc: finalDropLoc,
+        vehicleType: vehicleTypeToPass
+      }
+    });
   };
 
   return (
@@ -148,28 +284,103 @@ export default function LandingPage() {
             </p>
 
             <div className="rapido-booking-card">
-              <div className="input-row">
-                <div className="input-icon-dot">●</div>
-                <input
-                  type="text"
-                  placeholder="Enter Pickup Location"
-                  value={pickup}
-                  onChange={(e) => setPickup(e.target.value)}
-                />
+              {/* Pickup Input */}
+              <div style={{ position: 'relative' }}>
+                <div className="input-row">
+                  <div className="input-icon-dot">●</div>
+                  <input
+                    type="text"
+                    placeholder="Enter Pickup Location (e.g. Connaught Place)"
+                    value={pickup}
+                    onChange={(e) => handleSearchChange(e.target.value, 'pickup')}
+                    onFocus={() => { if (pickup && suggestions.length) setActiveSearch('pickup'); }}
+                  />
+                  {pickup && (
+                    <button
+                      type="button"
+                      onClick={() => { setPickup(''); setPickupLoc(null); setSuggestions([]); }}
+                      style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '0.9rem' }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {activeSearch === 'pickup' && suggestions.length > 0 && (
+                  <div className="landing-suggestions-dropdown">
+                    {suggestions.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="landing-suggestion-item"
+                        onClick={() => handleSelectSuggestion(item, 'pickup')}
+                      >
+                        <span className="icon">📍</span>
+                        <span className="text">{item.display_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="input-row">
-                <div className="input-icon-ring">○</div>
-                <input
-                  type="text"
-                  placeholder="Enter Drop Location"
-                  value={drop}
-                  onChange={(e) => setDrop(e.target.value)}
-                />
+              {/* Drop Input */}
+              <div style={{ position: 'relative' }}>
+                <div className="input-row">
+                  <div className="input-icon-ring">○</div>
+                  <input
+                    type="text"
+                    placeholder="Enter Drop Location (e.g. Airport T3)"
+                    value={drop}
+                    onChange={(e) => handleSearchChange(e.target.value, 'drop')}
+                    onFocus={() => { if (drop && suggestions.length) setActiveSearch('drop'); }}
+                  />
+                  {drop && (
+                    <button
+                      type="button"
+                      onClick={() => { setDrop(''); setDropLoc(null); setSuggestions([]); }}
+                      style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '0.9rem' }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {activeSearch === 'drop' && suggestions.length > 0 && (
+                  <div className="landing-suggestions-dropdown">
+                    {suggestions.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="landing-suggestion-item"
+                        onClick={() => handleSelectSuggestion(item, 'drop')}
+                      >
+                        <span className="icon">🏁</span>
+                        <span className="text">{item.display_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <button onClick={handleBookClick} className="btn-rapido-book-full">
-                Book Ride
+              {/* Popular quick-pick pills */}
+              <div className="landing-quick-pills">
+                <span className="quick-label">⚡ Quick:</span>
+                {POPULAR_LOCATIONS.map((loc, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="landing-pill-btn"
+                    onClick={() => handleQuickPick(loc)}
+                  >
+                    {loc.name.split(',')[0]}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => handleBookClick()}
+                className="btn-rapido-book-full"
+                disabled={loadingGeocode}
+              >
+                {loadingGeocode ? 'Preparing Route...' : 'Book Ride →'}
               </button>
             </div>
           </div>
@@ -236,7 +447,7 @@ export default function LandingPage() {
               <div
                 key={item.id}
                 className={`service-card ${selectedService === item.id ? 'active' : ''}`}
-                onClick={() => { setSelectedService(item.id); handleBookClick(); }}
+                onClick={() => { setSelectedService(item.id); handleBookClick(item.id === 'cab' ? 'sedan' : item.id); }}
               >
                 <div className="service-text">
                   <h3>{item.name}</h3>

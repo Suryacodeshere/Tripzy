@@ -106,6 +106,14 @@ export const socketEmitter = {
     }
   },
 
+  // Notify all online drivers in the drivers pool
+  notifyAllDrivers(rideData) {
+    if (ioInstance) {
+      console.log('📡 Broadcasting ride request to drivers_pool room');
+      ioInstance.to('drivers_pool').emit('ride:request', rideData);
+    }
+  },
+
   // Notify all participants in a ride room of a status change (accepted, arrived, started, completed)
   emitRideStatusUpdate(rideId, status, rideData) {
     if (ioInstance) {
