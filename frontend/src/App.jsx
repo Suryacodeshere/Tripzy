@@ -155,8 +155,11 @@ export default function App() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', backgroundColor: '#05060a' }}>
-        <div className="spinner"></div>
+      <div style={{ display: 'flex', height: '100vh', flexDirection: 'column', gap: '16px', justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
+        <div style={{ display: 'inline-block', background: '#FDB813', color: '#111827', fontWeight: 900, fontSize: '1.5rem', padding: '6px 20px', borderRadius: '24px', boxShadow: '0 4px 15px rgba(253, 184, 19, 0.3)' }}>
+          tripzy
+        </div>
+        <div className="spinner" style={{ borderColor: '#E5E7EB', borderTopColor: '#FDB813' }}></div>
       </div>
     );
   }

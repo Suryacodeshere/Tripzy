@@ -2809,3 +2809,183 @@ $rapido-border: #e5e7eb;
   50% { opacity: 0.4; transform: scale(0.85); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+
+// Safety Modal Overlay
+.safety-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+
+  .safety-modal-dialog {
+    background: #ffffff;
+    border-radius: 20px;
+    max-width: 520px;
+    width: 100%;
+    padding: 28px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid #e5e7eb;
+    color: #111827;
+    animation: slideUp 0.25s ease-out;
+
+    .safety-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+
+      .safety-title-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .safety-icon-large {
+          font-size: 2rem;
+          background: #fef3c7;
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+
+      .btn-safety-close {
+        background: #f3f4f6;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        color: #4b5563;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #e5e7eb;
+          color: #111827;
+        }
+      }
+    }
+
+    .safety-sos-card {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+
+      .safety-sos-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+
+        .btn-sos-emergency {
+          background: #dc2626;
+          color: #ffffff;
+          padding: 10px 14px;
+          border-radius: 8px;
+          text-align: center;
+          text-decoration: none;
+          font-weight: 700;
+          font-size: 0.85rem;
+          box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+          transition: background 0.15s ease;
+
+          &:hover {
+            background: #b91c1c;
+          }
+        }
+
+        .btn-sos-support {
+          background: #ffffff;
+          color: #991b1b;
+          border: 1px solid #fca5a5;
+          padding: 10px 14px;
+          border-radius: 8px;
+          text-align: center;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 0.85rem;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: #fee2e2;
+          }
+        }
+      }
+    }
+
+    .safety-points-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+
+      .safety-point-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 12px;
+        background: #f9fafb;
+        border: 1px solid #f3f4f6;
+        border-radius: 10px;
+
+        .point-icon {
+          font-size: 1.3rem;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .point-title {
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: #1f2937;
+          margin-bottom: 2px;
+        }
+
+        .point-desc {
+          font-size: 0.8rem;
+          color: #4b5563;
+          line-height: 1.35;
+        }
+      }
+    }
+
+    .safety-modal-footer {
+      .btn-safety-dismiss {
+        width: 100%;
+        background: #111827;
+        color: #fdb813;
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+
+        &:hover {
+          background: #1f2937;
+        }
+      }
+    }
+  }
+}
+
+.btn-tab-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
