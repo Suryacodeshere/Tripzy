@@ -2,15 +2,6 @@ import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App.jsx';
 
-const POPULAR_LOCATIONS = [
-  { name: 'Connaught Place, New Delhi', lat: 28.6304, lon: 77.2177 },
-  { name: 'Indiranagar, Bangalore', lat: 12.9719, lon: 77.6412 },
-  { name: 'MG Road, Bangalore', lat: 12.9756, lon: 77.6068 },
-  { name: 'Delhi Airport (IGI T3)', lat: 28.5562, lon: 77.1000 },
-  { name: 'Cyber Hub, Gurugram', lat: 28.4986, lon: 77.0878 },
-  { name: 'Koramangala, Bangalore', lat: 12.9352, lon: 77.6245 }
-];
-
 export default function LandingPage() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
@@ -137,22 +128,6 @@ export default function LandingPage() {
       setPickupLoc(coords);
     } else {
       setDrop(item.display_name);
-      setDropLoc(coords);
-    }
-    setSuggestions([]);
-    setActiveSearch('');
-  };
-
-  const handleQuickPick = (loc) => {
-    const coords = {
-      type: 'Point',
-      coordinates: [loc.lon, loc.lat]
-    };
-    if (!pickup) {
-      setPickup(loc.name);
-      setPickupLoc(coords);
-    } else {
-      setDrop(loc.name);
       setDropLoc(coords);
     }
     setSuggestions([]);
@@ -360,21 +335,6 @@ export default function LandingPage() {
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Popular quick-pick pills */}
-              <div className="landing-quick-pills">
-                <span className="quick-label">⚡ Quick:</span>
-                {POPULAR_LOCATIONS.map((loc, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="landing-pill-btn"
-                    onClick={() => handleQuickPick(loc)}
-                  >
-                    {loc.name.split(',')[0]}
-                  </button>
-                ))}
               </div>
 
               <button
