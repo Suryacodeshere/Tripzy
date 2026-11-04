@@ -87,9 +87,17 @@ export default function PassengerDashboard() {
         try {
           const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(pAddr)}`);
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data) && data.length > 0 && !data[0].display_name?.includes('(Simulated Location)')) {
             finalPLoc = { type: 'Point', coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)] };
             setPickupLoc(finalPLoc);
+          } else {
+            // Direct client fallback to Photon
+            const pRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(pAddr)}&limit=1`);
+            const pData = await pRes.json();
+            if (pData.features && pData.features.length > 0) {
+              finalPLoc = { type: 'Point', coordinates: pData.features[0].geometry.coordinates };
+              setPickupLoc(finalPLoc);
+            }
           }
         } catch (e) {}
       } else if (finalPLoc) {
@@ -100,9 +108,17 @@ export default function PassengerDashboard() {
         try {
           const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(dAddr)}`);
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data) && data.length > 0 && !data[0].display_name?.includes('(Simulated Location)')) {
             finalDLoc = { type: 'Point', coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)] };
             setDropLoc(finalDLoc);
+          } else {
+            // Direct client fallback to Photon
+            const pRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(dAddr)}&limit=1`);
+            const pData = await pRes.json();
+            if (pData.features && pData.features.length > 0) {
+              finalDLoc = { type: 'Point', coordinates: pData.features[0].geometry.coordinates };
+              setDropLoc(finalDLoc);
+            }
           }
         } catch (e) {}
       } else if (finalDLoc) {
@@ -390,7 +406,7 @@ export default function PassengerDashboard() {
     }
   };
 
-  // Perform Address Search (Nominatim Proxy)
+  // Perform Address Search (Robust Geocoding)
   const handleSearch = (val, type) => {
     setActiveInput(type);
     if (type === 'pickup') {
@@ -408,13 +424,48 @@ export default function PassengerDashboard() {
 
     debounceTimeout.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}`);
-        const data = await res.json();
-        setSuggestions(data);
+        let results = [];
+        try {
+          const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0 && !data[0].display_name?.includes('(Simulated Location)')) {
+              results = data;
+            }
+          }
+        } catch (backendErr) {
+          console.warn('Backend geocode fetch failed, using direct client lookup:', backendErr);
+        }
+
+        // Direct browser fallback to Photon (real worldwide OSM database)
+        if (results.length === 0) {
+          try {
+            const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=5`);
+            if (directRes.ok) {
+              const data = await directRes.json();
+              results = (data.features || []).map((f, idx) => ({
+                place_id: f.properties.osm_id || (Date.now() + idx),
+                display_name: [
+                  f.properties.name,
+                  f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
+                  f.properties.street,
+                  f.properties.district,
+                  f.properties.city,
+                  f.properties.state,
+                  f.properties.country
+                ].filter(Boolean).join(', '),
+                lat: String(f.geometry.coordinates[1]),
+                lon: String(f.geometry.coordinates[0])
+              }));
+            }
+          } catch (dErr) {}
+        }
+
+        setSuggestions(results);
       } catch (err) {
         console.error('Suggestions error:', err);
       }
-    }, 500);
+    }, 400);
   };
 
   const selectSuggestion = (item) => {
@@ -442,17 +493,35 @@ export default function PassengerDashboard() {
     const [lng, lat] = coords;
 
     try {
-      const res = await fetch(`/api/rides/geocode/reverse?lat=${lat}&lon=${lng}`);
-      const data = await res.json();
-      
+      let resolvedAddress = '';
+      try {
+        const res = await fetch(`/api/rides/geocode/reverse?lat=${lat}&lon=${lng}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.display_name) resolvedAddress = data.display_name;
+        }
+      } catch (e) {}
+
+      if (!resolvedAddress) {
+        try {
+          const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+          if (bdcRes.ok) {
+            const bdcData = await bdcRes.json();
+            const parts = [bdcData.locality, bdcData.city, bdcData.principalSubdivision].filter(Boolean);
+            if (parts.length > 0) resolvedAddress = parts.join(', ');
+          }
+        } catch (e) {}
+      }
+
+      const finalAddress = resolvedAddress || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
       const locPoint = { type: 'Point', coordinates: coords };
       
       if (inputType === 'pickup') {
         setPickupLoc(locPoint);
-        setPickupAddress(data.display_name || `Coordinate (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        setPickupAddress(finalAddress);
       } else {
         setDropLoc(locPoint);
-        setDropAddress(data.display_name || `Coordinate (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        setDropAddress(finalAddress);
       }
     } catch (err) {
       console.error('Map reverse geocoding error:', err);

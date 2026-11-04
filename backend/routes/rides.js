@@ -441,86 +441,133 @@ router.post('/:id/rating', authenticateToken, async (req, res) => {
   }
 });
 
-// GEOLOCATION PROXY (Nominatim)
+// GEOLOCATION PROXY (Photon + Nominatim with zero simulated labels)
 router.get('/geocode/search', async (req, res) => {
   const { q } = req.query;
   if (!q) {
     return res.status(400).json({ message: 'Query query string (q) is required.' });
   }
 
+  // 1. Try Photon first (high availability, OSM-based global search, no cloud IP restrictions)
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=5`;
+    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`;
+    const pResponse = await fetch(photonUrl, {
+      headers: { 'User-Agent': 'Tripzy-RideSharing/1.0' }
+    });
+    if (pResponse.ok) {
+      const pData = await pResponse.json();
+      if (Array.isArray(pData.features) && pData.features.length > 0) {
+        const results = pData.features.map((f, idx) => ({
+          place_id: f.properties.osm_id || (Date.now() + idx),
+          display_name: [
+            f.properties.name,
+            f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
+            f.properties.street,
+            f.properties.district,
+            f.properties.city,
+            f.properties.state,
+            f.properties.country
+          ].filter(Boolean).join(', '),
+          lat: String(f.geometry.coordinates[1]),
+          lon: String(f.geometry.coordinates[0])
+        }));
+        return res.json(results);
+      }
+    }
+  } catch (photonErr) {
+    console.warn('⚠️ Photon search warning:', photonErr.message);
+  }
+
+  // 2. Try Nominatim with application identification and contact email
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=5&email=tripzyapp@gmail.com`;
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'Tripzy-RideSharing-App/1.0' }
+      headers: { 'User-Agent': 'TripzyApp/1.0 (https://tripzy-6xho.vercel.app; support@tripzy.com)' }
     });
     
-    if (!response.ok) {
-      throw new Error(`Nominatim geocoding error: ${response.statusText}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return res.json(data);
+      }
     }
-    const data = await response.json();
-    res.json(data);
   } catch (error) {
-    console.warn('⚠️ Nominatim search failed, returning simulated address search fallback:', error.message);
-    
-    // Simulate some simple locations for fallback
-    const query = q.toLowerCase();
-    const mockLocations = [
-      { name: 'Connaught Place, New Delhi', lat: 28.6304, lon: 77.2177 },
-      { name: 'Gateway of India, Mumbai', lat: 18.9220, lon: 72.8347 },
-      { name: 'Howrah Bridge, Kolkata', lat: 22.5851, lon: 88.3468 },
-      { name: 'MG Road, Bangalore', lat: 12.9756, lon: 77.6068 },
-      { name: 'Marina Beach, Chennai', lat: 13.0475, lon: 80.2824 },
-      { name: 'Indiranagar, Bangalore', lat: 12.9719, lon: 77.6412 },
-      { name: 'Koramangala, Bangalore', lat: 12.9352, lon: 77.6245 },
-      { name: 'Whitefield, Bangalore', lat: 12.9698, lon: 77.7500 },
-      { name: 'Aerocity, New Delhi', lat: 28.5476, lon: 77.1215 }
-    ];
-
-    const matched = mockLocations.filter(loc => loc.name.toLowerCase().includes(query));
-    
-    // If no exact match, mock one search result with the query name centered at MG Road
-    if (matched.length === 0) {
-      matched.push({
-        name: `${q} (Simulated Location)`,
-        lat: 12.9716 + (Math.random() - 0.5) * 0.05,
-        lon: 77.5946 + (Math.random() - 0.5) * 0.05
-      });
-    }
-
-    const formattedResponse = matched.map((loc, idx) => ({
-      place_id: 1000 + idx,
-      display_name: loc.name,
-      lat: String(loc.lat),
-      lon: String(loc.lon)
-    }));
-
-    res.json(formattedResponse);
+    console.warn('⚠️ Nominatim search failed:', error.message);
   }
+
+  // 3. Known hub fallback (real landmark locations across India, never labeled simulated)
+  const query = q.toLowerCase();
+  const mockLocations = [
+    { name: 'Connaught Place, New Delhi', lat: 28.6304, lon: 77.2177 },
+    { name: 'Gateway of India, Mumbai', lat: 18.9220, lon: 72.8347 },
+    { name: 'Howrah Bridge, Kolkata', lat: 22.5851, lon: 88.3468 },
+    { name: 'MG Road, Bangalore', lat: 12.9756, lon: 77.6068 },
+    { name: 'Marina Beach, Chennai', lat: 13.0475, lon: 80.2824 },
+    { name: 'Indiranagar, Bangalore', lat: 12.9719, lon: 77.6412 },
+    { name: 'Koramangala, Bangalore', lat: 12.9352, lon: 77.6245 },
+    { name: 'Whitefield, Bangalore', lat: 12.9698, lon: 77.7500 },
+    { name: 'Aerocity, New Delhi', lat: 28.5476, lon: 77.1215 },
+    { name: 'Barasat Junction, Kolkata', lat: 22.7214, lon: 88.4812 }
+  ];
+
+  const matched = mockLocations.filter(loc => loc.name.toLowerCase().includes(query));
+  const formattedResponse = matched.map((loc, idx) => ({
+    place_id: 1000 + idx,
+    display_name: loc.name,
+    lat: String(loc.lat),
+    lon: String(loc.lon)
+  }));
+
+  return res.json(formattedResponse);
 });
 
-// GEOLOCATION REVERSE PROXY (Nominatim)
+// GEOLOCATION REVERSE PROXY (Nominatim + BigDataCloud)
 router.get('/geocode/reverse', async (req, res) => {
   const { lat, lon } = req.query;
   if (!lat || !lon) {
     return res.status(400).json({ message: 'Latitude (lat) and longitude (lon) are required.' });
   }
 
+  // 1. Try Nominatim with contact email
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&email=tripzyapp@gmail.com`;
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'Tripzy-RideSharing-App/1.0' }
+      headers: { 'User-Agent': 'TripzyApp/1.0 (https://tripzy-6xho.vercel.app; support@tripzy.com)' }
     });
-    if (!response.ok) {
-      throw new Error(`Nominatim reverse geocoding error: ${response.statusText}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.display_name) {
+        return res.json(data);
+      }
     }
-    const data = await response.json();
-    res.json(data);
   } catch (error) {
-    console.warn('⚠️ Nominatim reverse failed, returning mock reverse fallback:', error.message);
-    res.json({
-      display_name: `Location near (${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)})`
-    });
+    console.warn('⚠️ Nominatim reverse failed:', error.message);
   }
+
+  // 2. Try BigDataCloud reverse geocode client API (no auth required, global locality lookup)
+  try {
+    const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+    const bdcRes = await fetch(bdcUrl);
+    if (bdcRes.ok) {
+      const bdcData = await bdcRes.json();
+      const parts = [
+        bdcData.locality,
+        bdcData.city,
+        bdcData.principalSubdivision,
+        bdcData.countryName
+      ].filter(Boolean);
+      if (parts.length > 0) {
+        return res.json({ display_name: parts.join(', ') });
+      }
+    }
+  } catch (bdcErr) {
+    console.warn('⚠️ BigDataCloud reverse warning:', bdcErr.message);
+  }
+
+  // 3. Graceful fallback
+  res.json({
+    display_name: `Location (${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)})`
+  });
 });
 
 // -------------------------------------------------------------

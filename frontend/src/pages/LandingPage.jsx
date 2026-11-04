@@ -107,11 +107,41 @@ export default function LandingPage() {
 
     debounceTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}`);
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setSuggestions(data);
+        let results = [];
+        try {
+          const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0 && !data[0].display_name?.includes('(Simulated Location)')) {
+              results = data;
+            }
+          }
+        } catch (e) {}
+
+        if (results.length === 0) {
+          try {
+            const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=5`);
+            if (directRes.ok) {
+              const data = await directRes.json();
+              results = (data.features || []).map((f, idx) => ({
+                place_id: f.properties.osm_id || (Date.now() + idx),
+                display_name: [
+                  f.properties.name,
+                  f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
+                  f.properties.street,
+                  f.properties.district,
+                  f.properties.city,
+                  f.properties.state,
+                  f.properties.country
+                ].filter(Boolean).join(', '),
+                lat: String(f.geometry.coordinates[1]),
+                lon: String(f.geometry.coordinates[0])
+              }));
+            }
+          } catch (dErr) {}
         }
+
+        setSuggestions(results);
       } catch (e) {
         console.error('Landing geocode error:', e);
       }
@@ -137,14 +167,30 @@ export default function LandingPage() {
   const resolveGeocode = async (address) => {
     try {
       const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(address)}`);
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return {
-          type: 'Point',
-          coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)]
-        };
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0 && !data[0].display_name?.includes('(Simulated Location)')) {
+          return {
+            type: 'Point',
+            coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)]
+          };
+        }
       }
     } catch (e) {}
+
+    try {
+      const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1`);
+      if (directRes.ok) {
+        const data = await directRes.json();
+        if (data.features && data.features.length > 0) {
+          return {
+            type: 'Point',
+            coordinates: data.features[0].geometry.coordinates
+          };
+        }
+      }
+    } catch (e) {}
+
     return {
       type: 'Point',
       coordinates: [77.2177, 28.6304]
