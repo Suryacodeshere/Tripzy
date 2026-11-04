@@ -44,6 +44,19 @@ export default function Map({
     mapRef.current = map;
     nearbyDriversGroupRef.current = L.layerGroup().addTo(map);
 
+    // Size invalidation triggers to guarantee tiles render properly even in flex layouts
+    const t1 = setTimeout(() => {
+      if (map) map.invalidateSize();
+    }, 150);
+    const t2 = setTimeout(() => {
+      if (map) map.invalidateSize();
+    }, 500);
+
+    const handleResize = () => {
+      if (map) map.invalidateSize();
+    };
+    window.addEventListener('resize', handleResize);
+
     // Attempt browser Geolocation to center map on user's real location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -76,12 +89,22 @@ export default function Map({
 
     // Cleanup on unmount
     return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', handleResize);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
   }, []);
+
+  // Guarantee map size is invalidated whenever pins or routes change
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.invalidateSize();
+    }
+  }, [pickupLoc, dropLoc, routeGeometry]);
 
   // Sync Pickup Marker
   useEffect(() => {
@@ -239,8 +262,8 @@ export default function Map({
   }, [nearbyDrivers, driverLoc]);
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <div ref={mapContainerRef} className="map-container" style={{ width: '100%', height: '100%' }} />
+    <div style={{ width: '100%', height: '100%', minHeight: '100%', position: 'relative' }}>
+      <div ref={mapContainerRef} className="map-container" style={{ width: '100%', height: '100%', minHeight: '100%' }} />
       
       {/* Decorative styling overlays injected via plain inline CSS for Leaflet divs */}
       <style>{`

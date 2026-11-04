@@ -13,11 +13,6 @@ export default function AppNavbar() {
     return null;
   }
 
-  // Only render when authenticated
-  if (!token || !user) {
-    return null;
-  }
-
   // Compute initials e.g. "Amit Verma" -> "AV"
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -26,116 +21,163 @@ export default function AppNavbar() {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const isPassenger = user.role === 'passenger';
-  const isDriver = user.role === 'driver';
-  const isAdmin = user.role === 'admin';
+  const isPassenger = user?.role === 'passenger';
+  const isDriver = user?.role === 'driver';
+  const isAdmin = user?.role === 'admin';
+
+  // Render guest navbar header if visiting dashboard without authentication
+  const renderGuestNavbar = () => (
+    <header className="app-main-navbar">
+      <div className="navbar-left">
+        <Link to="/" className="navbar-brand-link" title="Tripzy Home">
+          <span className="brand-pill-logo">tripzy</span>
+        </Link>
+        <span style={{ marginLeft: '12px', fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>
+          Ride Booking
+        </span>
+      </div>
+
+      <div className="navbar-right" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <button
+          type="button"
+          onClick={() => setShowSafetyModal(true)}
+          className="nav-tab-item btn-tab-action"
+          title="View safety protocols & emergency assistance"
+        >
+          <span className="tab-icon">🛡️</span>
+          <span>Safety</span>
+        </button>
+
+        <Link
+          to="/login"
+          style={{
+            textDecoration: 'none',
+            padding: '6px 16px',
+            borderRadius: '8px',
+            background: '#fdb813',
+            color: '#111827',
+            fontWeight: 700,
+            fontSize: '0.85rem',
+            display: 'inline-flex',
+            alignItems: 'center'
+          }}
+        >
+          Log In
+        </Link>
+      </div>
+    </header>
+  );
 
   return (
     <>
-      <header className="app-main-navbar">
-        <div className="navbar-left">
-          {/* Brand Logo */}
-          <Link to="/" className="navbar-brand-link" title="Tripzy Home">
-            <span className="brand-pill-logo">tripzy</span>
-          </Link>
+      {!token || !user ? (
+        renderGuestNavbar()
+      ) : (
+        <header className="app-main-navbar">
+          <div className="navbar-left">
+            {/* Brand Logo */}
+            <Link to="/" className="navbar-brand-link" title="Tripzy Home">
+              <span className="brand-pill-logo">tripzy</span>
+            </Link>
 
-          {/* Section Tabs */}
-          <nav className="navbar-tab-menu">
-            {isPassenger && (
-              <>
-                <Link
-                  to="/passenger"
-                  className={`nav-tab-item ${location.pathname === '/passenger' ? 'active' : ''}`}
-                >
-                  <span className="tab-icon">🚗</span>
-                  <span>Ride</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setShowSafetyModal(true)}
-                  className="nav-tab-item btn-tab-action"
-                  title="View safety protocols & emergency assistance"
-                >
-                  <span className="tab-icon">🛡️</span>
-                  <span>Safety</span>
-                </button>
-              </>
-            )}
+            {/* Section Tabs */}
+            <nav className="navbar-tab-menu">
+              {isPassenger && (
+                <>
+                  <Link
+                    to="/passenger"
+                    className={`nav-tab-item ${location.pathname === '/passenger' ? 'active' : ''}`}
+                  >
+                    <span className="tab-icon">🚗</span>
+                    <span>Ride</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowSafetyModal(true)}
+                    className="nav-tab-item btn-tab-action"
+                    title="View safety protocols & emergency assistance"
+                  >
+                    <span className="tab-icon">🛡️</span>
+                    <span>Safety</span>
+                  </button>
+                </>
+              )}
 
-            {isDriver && (
-              <>
-                <Link
-                  to="/driver"
-                  className={`nav-tab-item ${location.pathname === '/driver' ? 'active' : ''}`}
-                >
-                  <span className="tab-icon">👨🏻‍✈️</span>
-                  <span>Driver Console</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setShowSafetyModal(true)}
-                  className="nav-tab-item btn-tab-action"
-                >
-                  <span className="tab-icon">🛡️</span>
-                  <span>Safety Protocols</span>
-                </button>
-              </>
-            )}
+              {isDriver && (
+                <>
+                  <Link
+                    to="/driver"
+                    className={`nav-tab-item ${location.pathname === '/driver' ? 'active' : ''}`}
+                  >
+                    <span className="tab-icon">👨🏻‍✈️</span>
+                    <span>Driver Console</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowSafetyModal(true)}
+                    className="nav-tab-item btn-tab-action"
+                  >
+                    <span className="tab-icon">🛡️</span>
+                    <span>Safety Protocols</span>
+                  </button>
+                </>
+              )}
 
-            {isAdmin && (
-              <>
-                <Link
-                  to="/admin"
-                  className={`nav-tab-item ${location.pathname === '/admin' ? 'active' : ''}`}
-                >
-                  <span className="tab-icon">📊</span>
-                  <span>Operations</span>
-                </Link>
-                <Link to="/" className="nav-tab-item">
-                  <span>Website</span>
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-
-        <div className="navbar-right">
-          {/* 24x7 Safety indicator for passengers */}
-          {isPassenger && (
-            <div
-              className="safety-badge-pill"
-              title="Click to view Safety Protocols & Emergency SOS"
-              onClick={() => setShowSafetyModal(true)}
-              style={{ cursor: 'pointer' }}
-            >
-              <span className="safety-dot">●</span>
-              <span>Safety Shield Active</span>
-            </div>
-          )}
-
-          {/* User Profile Card */}
-          <div className="navbar-user-card">
-            <div className="user-avatar-circle">
-              {getInitials(user.name)}
-            </div>
-            <div className="user-details">
-              <span className="user-name">{user.name}</span>
-              <span className={`user-role-label ${user.role}`}>
-                {isDriver ? 'Driver Partner' : isAdmin ? 'Administrator' : 'Passenger'}
-              </span>
-            </div>
+              {isAdmin && (
+                <>
+                  <Link
+                    to="/admin"
+                    className={`nav-tab-item ${location.pathname === '/admin' ? 'active' : ''}`}
+                  >
+                    <span className="tab-icon">📊</span>
+                    <span>Operations</span>
+                  </Link>
+                  <Link to="/" className="nav-tab-item">
+                    <span>Website</span>
+                  </Link>
+                </>
+              )}
+            </nav>
           </div>
 
-          {/* Clean Sign Out */}
-          <button
-            onClick={logout}
-            className="btn-app-logout"
-            title="Sign out of your account"
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
+          <div className="navbar-right">
+            {/* 24x7 Safety indicator for passengers */}
+            {isPassenger && (
+              <div
+                className="safety-badge-pill"
+                title="Click to view Safety Protocols & Emergency SOS"
+                onClick={() => setShowSafetyModal(true)}
+                style={{ cursor: 'pointer' }}
+              >
+                <span className="safety-dot">●</span>
+                <span>Safety Shield Active</span>
+              </div>
+            )}
+
+            {/* User Profile Card */}
+            <div className="navbar-user-card">
+              <div className="user-avatar-circle">
+                {getInitials(user?.name)}
+              </div>
+              <div className="user-details">
+                <span className="user-name">{user?.name}</span>
+                <span className={`user-role-label ${user?.role}`}>
+                  {isDriver ? 'Driver Partner' : isAdmin ? 'Administrator' : 'Passenger'}
+                </span>
+              </div>
+            </div>
+
+            {/* Clean Sign Out */}
+            <button
+              onClick={logout}
+              className="btn-app-logout"
+              title="Sign out of your account"
+            >
+              Sign Out
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* Safety & Emergency SOS Modal */}
       {showSafetyModal && (
