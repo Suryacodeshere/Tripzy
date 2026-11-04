@@ -483,17 +483,14 @@ router.get('/geocode/search', async (req, res) => {
           };
         });
 
-        // Filter and prioritize locations within metropolitan/city radius (< 75 km)
+        // Filter and prioritize locations strictly within metropolitan/city radius (<= 75 km)
         if (hasUserCoords) {
           const localResults = results.filter(r => r.dist !== null && r.dist <= 75);
-          if (localResults.length > 0) {
-            localResults.sort((a, b) => a.dist - b.dist);
-            return res.json(localResults.slice(0, 6));
-          }
-          results.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
+          localResults.sort((a, b) => a.dist - b.dist);
+          return res.json(localResults.slice(0, 6));
         }
 
-        return res.json(results.slice(0, 6));
+        return res.json([]);
       }
     }
   } catch (photonErr) {
@@ -506,7 +503,7 @@ router.get('/geocode/search', async (req, res) => {
     if (hasUserCoords) {
       const delta = 0.65; // ~70 km radius
       const viewbox = `${userLon - delta},${userLat + delta},${userLon + delta},${userLat - delta}`;
-      nomUrl += `&viewbox=${viewbox}`;
+      nomUrl += `&viewbox=${viewbox}&bounded=1`;
     }
 
     const response = await fetch(nomUrl, {
@@ -531,14 +528,11 @@ router.get('/geocode/search', async (req, res) => {
 
         if (hasUserCoords) {
           const localResults = results.filter(r => r.dist !== null && r.dist <= 75);
-          if (localResults.length > 0) {
-            localResults.sort((a, b) => a.dist - b.dist);
-            return res.json(localResults.slice(0, 6));
-          }
-          results.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
+          localResults.sort((a, b) => a.dist - b.dist);
+          return res.json(localResults.slice(0, 6));
         }
 
-        return res.json(results.slice(0, 6));
+        return res.json([]);
       }
     }
   } catch (error) {
@@ -573,7 +567,8 @@ router.get('/geocode/search', async (req, res) => {
   });
 
   if (hasUserCoords) {
-    formattedResponse.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
+    formattedResponse = formattedResponse.filter(r => r.dist !== null && r.dist <= 75);
+    formattedResponse.sort((a, b) => a.dist - b.dist);
   }
 
   return res.json(formattedResponse.slice(0, 6));

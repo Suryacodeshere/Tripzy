@@ -443,7 +443,7 @@ export default function PassengerDashboard() {
     // Determine reference coordinate for proximity bias (intra-city priority)
     const refCoords = (type === 'drop' && pickupLoc?.coordinates)
       ? pickupLoc.coordinates
-      : (userLiveCoords || pickupLoc?.coordinates || null);
+      : (userLiveCoords || pickupLoc?.coordinates || [77.5946, 12.9716]);
     
     const biasParams = refCoords ? `&lat=${refCoords[1]}&lon=${refCoords[0]}` : '';
 
@@ -498,18 +498,18 @@ export default function PassengerDashboard() {
                   dist
                 };
               });
-
-              if (refCoords) {
-                const localResults = results.filter(r => r.dist !== null && r.dist <= 75);
-                if (localResults.length > 0) {
-                  localResults.sort((a, b) => a.dist - b.dist);
-                  results = localResults;
-                } else {
-                  results.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
-                }
-              }
             }
           } catch (dErr) {}
+        }
+
+        // STRICT INTRA-CITY FILTER: Reject any locations farther than 75 km from active city
+        if (refCoords && results.length > 0) {
+          results = results.filter(r => {
+            const d = r.dist != null ? r.dist : haversineKm(refCoords[0], refCoords[1], parseFloat(r.lon), parseFloat(r.lat));
+            r.dist = d;
+            return d <= 75; // Strict 75 km metropolitan ceiling
+          });
+          results.sort((a, b) => a.dist - b.dist);
         }
 
         setSuggestions(results.slice(0, 6));
@@ -912,24 +912,29 @@ export default function PassengerDashboard() {
                     }}
                   />
                 </div>
-                {activeInput === 'pickup' && suggestions.length > 0 && (
+                {activeInput === 'pickup' && (
                   <ul className="suggestions-list">
-                    {suggestions.map((item) => (
-                      <li
-                        key={item.place_id}
-                        onClick={() => selectSuggestion(item)}
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                      >
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '8px' }}>
-                          {item.display_name}
-                        </span>
-                        {item.dist != null && (
-                          <span style={{ fontSize: '0.72rem', background: 'rgba(253, 184, 19, 0.15)', color: '#fdb813', padding: '2px 7px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 600 }}>
-                            {item.dist < 1 ? '< 1 km' : `${item.dist} km`}
+                    {suggestions.length > 0 ? (
+                      suggestions.map((item) => (
+                        <li
+                          key={item.place_id}
+                          onClick={() => selectSuggestion(item)}
+                        >
+                          <span className="suggestion-name" title={item.display_name}>
+                            📍 {item.display_name}
                           </span>
-                        )}
+                          {item.dist != null && (
+                            <span className="suggestion-dist">
+                              {item.dist < 1 ? '< 1 km' : `${item.dist} km`}
+                            </span>
+                          )}
+                        </li>
+                      ))
+                    ) : pickupAddress.length >= 2 ? (
+                      <li className="no-suggestions-item">
+                        🔍 No locations found within 75 km of your city.
                       </li>
-                    ))}
+                    ) : null}
                   </ul>
                 )}
               </div>
@@ -951,24 +956,29 @@ export default function PassengerDashboard() {
                     }}
                   />
                 </div>
-                {activeInput === 'drop' && suggestions.length > 0 && (
+                {activeInput === 'drop' && (
                   <ul className="suggestions-list">
-                    {suggestions.map((item) => (
-                      <li
-                        key={item.place_id}
-                        onClick={() => selectSuggestion(item)}
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                      >
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '8px' }}>
-                          {item.display_name}
-                        </span>
-                        {item.dist != null && (
-                          <span style={{ fontSize: '0.72rem', background: 'rgba(253, 184, 19, 0.15)', color: '#fdb813', padding: '2px 7px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 600 }}>
-                            {item.dist < 1 ? '< 1 km' : `${item.dist} km`}
+                    {suggestions.length > 0 ? (
+                      suggestions.map((item) => (
+                        <li
+                          key={item.place_id}
+                          onClick={() => selectSuggestion(item)}
+                        >
+                          <span className="suggestion-name" title={item.display_name}>
+                            🏁 {item.display_name}
                           </span>
-                        )}
+                          {item.dist != null && (
+                            <span className="suggestion-dist">
+                              {item.dist < 1 ? '< 1 km' : `${item.dist} km`}
+                            </span>
+                          )}
+                        </li>
+                      ))
+                    ) : dropAddress.length >= 2 ? (
+                      <li className="no-suggestions-item">
+                        🔍 No locations found within 75 km of your city.
                       </li>
-                    ))}
+                    ) : null}
                   </ul>
                 )}
               </div>
