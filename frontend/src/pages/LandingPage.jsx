@@ -274,10 +274,16 @@ export default function LandingPage() {
                   onClick={() => navigate(user.role === 'driver' ? '/driver' : user.role === 'admin' ? '/admin' : '/passenger')}
                   className="btn-rapido-yellow"
                 >
-                  Dashboard ({user.name.split(' ')[0]}) →
+                  {user.role === 'driver' ? 'Driver Console →' : user.role === 'admin' ? 'Operations →' : 'Book a Ride →'}
                 </button>
+                <div className="landing-profile-pill" title={`${user.name} (${user.role})`}>
+                  <div className="landing-avatar">
+                    {user.name ? (user.name.trim().split(/\s+/).length > 1 ? (user.name.trim().split(/\s+/)[0][0] + user.name.trim().split(/\s+/)[user.name.trim().split(/\s+/).length - 1][0]).toUpperCase() : user.name.substring(0, 2).toUpperCase()) : 'U'}
+                  </div>
+                  <span className="landing-user-name">{user.name}</span>
+                </div>
                 <button onClick={logout} className="btn-rapido-outline">
-                  Logout
+                  Sign Out
                 </button>
               </div>
             ) : (

@@ -205,7 +205,7 @@ export default function Auth({ defaultMode = 'login' }) {
                   onClick={() => navigate(user.role === 'driver' ? '/driver' : '/passenger')}
                   className="btn-session-dash"
                 >
-                  Map Dashboard
+                  {user.role === 'driver' ? 'Driver Console →' : 'Book a Ride →'}
                 </button>
               </div>
             </div>

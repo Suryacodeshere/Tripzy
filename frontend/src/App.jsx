@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPage.jsx';
 import PassengerDashboard from './pages/PassengerDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
+import AppNavbar from './components/AppNavbar.jsx';
 
 // Override fetch to support backend URL redirection in production and token expiration recovery
 const originalFetch = window.fetch;
@@ -175,41 +176,8 @@ export default function App() {
     <AuthContext.Provider value={{ user, token, driverProfile, login, logout, setDriverProfile }}>
       <BrowserRouter>
         <div className="app-container">
-          {/* Navigation Header */}
-          {token && user && (
-            <header className="navbar marlin-nav-bar">
-              <Link to="/" className="logo marlin-brand">
-                <span className="logo-badge">🚕</span> Tripzy <em>Taxi</em>
-              </Link>
-              <div className="nav-links">
-                <Link to="/" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
-                  🌐 Public Website
-                </Link>
-                {user.role === 'passenger' && (
-                  <Link to="/passenger" className="btn btn-taxi" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
-                    🚖 Map Dashboard
-                  </Link>
-                )}
-                {user.role === 'driver' && (
-                  <Link to="/driver" className="btn btn-taxi" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
-                    👨🏻‍✈️ Driver Hub
-                  </Link>
-                )}
-                {user.role === 'admin' && (
-                  <Link to="/admin" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
-                    Admin Stats
-                  </Link>
-                )}
-                <div className="user-info">
-                  <span>{user.name}</span>
-                  <span className={`badge ${user.role}`}>{user.role}</span>
-                </div>
-                <button onClick={logout} className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '8px' }}>
-                  Logout
-                </button>
-              </div>
-            </header>
-          )}
+          {/* Production App Navigation Header (Auto-hides on Landing & Auth pages) */}
+          <AppNavbar />
 
           <Routes>
             <Route path="/" element={<LandingPage />} />
