@@ -1,174 +1,135 @@
-# Tripzy — Sustainable Real-Time Urban Ride-Sharing Platform
+# Tripzy — Real-Time Micro-Mobility & Ride-Sharing Platform
 
-[![Live App on Vercel](https://img.shields.io/badge/Frontend-Vercel%20Live-brightgreen?style=for-the-badge&logo=vercel)](https://tripzy-6xho.vercel.app/)
-[![Backend on Render](https://img.shields.io/badge/Backend-Render%20Cloud-informational?style=for-the-badge&logo=render)](https://tripzy-6e4q.onrender.com)
-[![MERN Stack](https://img.shields.io/badge/Stack-MERN%20%2B%20Socket.IO-blue?style=for-the-badge&logo=react)](https://github.com/Suryacodeshere/Tripzy)
-[![Maps Engine](https://img.shields.io/badge/GIS-Leaflet%20%2B%20OSM-orange?style=for-the-badge&logo=openstreetmap)](https://openstreetmap.org)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen?style=for-the-badge&logo=vercel)](https://tripzy-6xho.vercel.app/)
+[![MERN Stack](https://img.shields.io/badge/Stack-MERN%20%2B%20Socket.IO-61DAFB?style=for-the-badge&logo=react)](https://github.com/Suryacodeshere/Tripzy)
+[![GIS Engine](https://img.shields.io/badge/GIS-Leaflet%20%2B%20OpenStreetMap-orange?style=for-the-badge&logo=openstreetmap)](https://openstreetmap.org)
 [![Testing](https://img.shields.io/badge/E2E%20Tests-100%25%20Passing-success?style=for-the-badge)](test_e2e_flow.js)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**Tripzy** is a next-generation urban ride-sharing web platform engineered specifically for the demands of high-density Indian metropolitan cities. Built on the full MERN stack with Socket.IO and OpenStreetMap, Tripzy solves the most frustrating problems in modern ride-hailing: **high driver cancellations, opaque surge pricing, traffic congestion, and security risks**.
+> A production-grade, real-time urban ride-sharing platform engineered to tackle traffic congestion, ride cancellations, and expensive mapping overhead. Built with React 18, Node.js, Socket.IO WebSockets, and open-source GIS routing.
 
----
-
-## 🌐 Live Deployments & Presentation
-
-- **Frontend Client (Vercel):** [https://tripzy-6xho.vercel.app/](https://tripzy-6xho.vercel.app/)
-- **Backend API & WebSocket Gateway (Render):** [https://tripzy-6e4q.onrender.com](https://tripzy-6e4q.onrender.com)
-- **Review 3 PowerPoint Presentation:** [`Tripzy_Review_3_Final.pptx`](Tripzy_Review_3_Final.pptx)
+### 🌐 [**Experience the Live Demo**](https://tripzy-6xho.vercel.app/)
 
 ---
 
-## 🚀 What Makes Tripzy Different? (Key Innovations)
+## ⚡ Engineering Highlights & Core Features
 
-Unlike conventional ride-hailing applications (Uber, Ola, Rapido), Tripzy addresses structural flaws identified through peer-reviewed transportation research:
-
-| Innovation | The Problem in Existing Apps | How Tripzy Solves It |
-|---|---|---|
-| 🔐 **4-Digit Mutual Security PIN** | Passengers accidentally board wrong vehicles; drivers start trips without passengers. | Server generates a private 4-digit PIN for the passenger. The driver cannot start the trip meter or navigation without entering this exact code. |
-| 🔄 **Guaranteed Return Ride (Surge Shield)** | Riders get stranded late at night or at airports with 3x surge pricing; drivers drive back empty. | Riders can pre-lock their return ride at **0% surge** with an incoming backhaul driver when booking their outbound trip. |
-| ❄️ **Upfront AC Comfort Agreement** | Drivers refuse to turn on air conditioning in hot weather, causing heated arguments. | Passenger selects **AC On** or **AC Off** directly on the booking screen; clear expectations and transparent fare adjustments with zero haggling. |
-| 🛵 **Micro-Mobility First (Bike & Auto)** | Solo-passenger private cars create inner-city traffic bottlenecks and high emissions. | Full first-class support for **Tripzy Moto (Bike Taxi)** and **Tripzy Auto (CNG)** alongside Sedans and SUVs, with upfront fares. |
-| 🌱 **Real-Time Grams CO₂ Saved Badge** | Zero environmental awareness or incentives for choosing compact transit. | Dynamically computes and displays exact **grams of CO₂ displaced** on every ride card vs. a single-passenger private car. |
-| 🛡️ **In-App 112 Safety Shield** | Emergency help is hidden deep inside menus or redirects out of the app. | Integrated 1-tap dialer to **112 (National Police Emergency)** with continuous live GPS satellite telemetry visible without leaving the map. |
-| 🗺️ **Zero-Cost Open-Source Mapping** | Expensive Google Maps APIs break student/startup projects due to billing limits or expired keys. | 100% open-source GIS engine using **Leaflet.js** and official **OpenStreetMap** vector tiles, saving thousands in recurring API fees. |
-| 📍 **Strict 75 km Intra-City Search Radius** | Search suggestions show irrelevant locations across the globe (e.g. Paris, France when in Delhi). | Custom geocoding boundary strictly filters suggestions to within 75 km of the user's city, with a clean, high-contrast light dropdown. |
+- **⚡ Sub-100ms Duplex Telemetry:** Bi-directional WebSockets via Socket.IO provide instantaneous driver radar broadcasts, real-time GPS coordinate streaming, and live car tracking on the map.
+- **🗺️ Zero-Cost Open GIS Architecture:** Powered entirely by Leaflet.js and OpenStreetMap vector tiles paired with OSRM (Open Source Routing Machine). Zero dependency on paid, rate-limited Google Maps APIs.
+- **🔐 Mutual 4-Digit Security Handshake:** Server generates a cryptographically signed 4-digit start PIN displayed only to the passenger. Drivers cannot start the trip meter without inputting this PIN, preventing wrong-car boardings and phantom rides.
+- **🛵 Micro-Mobility First Architecture:** Custom pricing engine and first-class dispatch for **Bike Taxis (Moto)** and **Auto-Rickshaws (CNG)** alongside Sedans and SUVs, navigating dense traffic with low overhead.
+- **🌱 Real-Time Carbon Offset Engine:** Dynamic calculations quantify the exact grams of CO₂ displaced for each vehicle tier compared to single-passenger private cars.
+- **🔄 Surge Shield & Guaranteed Return Trips:** Pre-locks return trips at 0% surge for airport or suburban commuters while connecting with backhaul drivers to eliminate empty deadhead miles.
+- **❄️ Upfront Comfort Agreement:** In-app selection of AC preference during booking eliminates driver haggling and sets crystal-clear expectations upfront.
+- **🛡️ 1-Tap 112 Safety Shield:** Integrated non-reloading safety center with instant dialing to National Police Helpline (112) and continuous GPS satellite telemetry overlay.
+- **📍 Smart Intra-City Geocoding Boundary:** Custom spatial filtering (< 75 km radius) strictly limits suggestions to local city boundaries with a high-contrast, accessible UI.
+- **💳 Digital Sandbox Checkout:** Razorpay sandbox engine supporting UPI, Credit/Debit Cards, NetBanking, and Cash payment state transitions.
 
 ---
 
-## 📖 Research Foundations & Literature Synthesis
-
-Tripzy bridges academic transportation economics with production full-stack engineering, directly implementing solutions for gaps identified in four key papers:
+## 🏛️ System Architecture
 
 ```mermaid
 flowchart TD
-    A["Academic Research Papers"] --> B["Chen et al. (AER)<br/>Destination Blindness"]
-    A --> C["Cachon et al. (Management Science)<br/>Surge Pricing Mistrust"]
-    A --> D["Fielbaum et al. (TR-C)<br/>Solo Car Traffic Gridlocks"]
-    A --> E["Bertsimas et al. (Operations Research)<br/>Greedy Dispatch Deadheading"]
-
-    B --> F["Tripzy Solution: Upfront Drop Display + Driver Heading Corridors"]
-    C --> G["Tripzy Solution: Transparent Pricing + Guaranteed Return Ride (0% Surge)"]
-    D --> H["Tripzy Solution: Moto & Auto Priority + Live Grams CO2 Offset Badge"]
-    E --> I["Tripzy Solution: Directional Corridor Matching via Socket.IO Mesh"]
-```
-
-1. **Chen, Sheldon, & Kawano (*American Economic Review*):**
-   - *Finding:* Withholding destinations from drivers causes 25%–35% cancellations because drivers call riders to ask *"Where are you going?"* and cancel unprofitable trips.
-   - *Tripzy Implementation:* Complete upfront destination visibility on driver radar alerts + **Driver Heading Corridors** for shift-end return trips.
-2. **Cachon, Daniels, & Lobel (*Management Science*):**
-   - *Finding:* Unpredictable dynamic surge multipliers destroy customer trust and create severe driver earnings instability.
-   - *Tripzy Implementation:* Transparent formula-based tariffs + **Guaranteed Return Ride** pre-locking at 0% surge.
-3. **Fielbaum, Kucharski, & Cats (*Transportation Research Part C*):**
-   - *Finding:* Solo-passenger car hailing worsens urban traffic by up to 18%; platforms must prioritize high-density micro-mobility.
-   - *Tripzy Implementation:* Priority for **Tripzy Moto (Bike Taxi)** and **Tripzy Auto** with dynamic **Grams CO₂ Saved** badges.
-4. **Bertsimas, Jaillet, & Martin (*Operations Research*):**
-   - *Finding:* Greedy "nearest-car" dispatch algorithms waste fuel and create long deadhead miles where empty cars drive far across town.
-   - *Tripzy Implementation:* **Directional Corridor Matching** and proximity filtering via Socket.IO.
-
----
-
-## 🏗️ System Architecture & Data Flow
-
-```mermaid
-flowchart LR
-    subgraph Client ["Frontend Client (React 18 + Leaflet)"]
-        PH["Passenger Hub"]
-        CC["Captain Console"]
-        GIS["Leaflet + OpenStreetMap Engine"]
+    subgraph Client ["Client Presentation Layer (React 18 + Vite)"]
+        PH["Passenger Hub (Booking & Live Tracking)"]
+        CC["Captain Console (Driver Radar & Telemetry)"]
+        GIS["Leaflet + OpenStreetMap Vector Engine"]
     end
 
-    subgraph Gateway ["Real-Time Telemetry Gateway"]
-        WS["Socket.IO Duplex Mesh (<100ms)"]
-        Radar["Broadcast Dispatch Radar"]
+    subgraph RealTime ["Real-Time Gateway (Socket.IO)"]
+        Radar["Proximity Dispatch Radar"]
+        Location["Sub-100ms Telemetry Streamer"]
+        Room["Ride State Room Mesh"]
     end
 
-    subgraph Backend ["REST API Services (Node.js + Express)"]
-        Auth["JWT Auth & BCrypt"]
-        Rides["/api/rides/estimate & State Engine"]
-        OSRM["OSRM Driving Distance Engine"]
+    subgraph Services ["Backend Services (Node.js + Express)"]
+        Auth["JWT Authentication & BCrypt Hashing"]
+        Estimate["Route & Fare Estimation Engine"]
+        OSRM["OSRM Driving Distance & Route Polylines"]
     end
 
-    subgraph Storage ["Cloud Persistence & Payments"]
-        Mongo[("MongoDB Atlas Cloud")]
-        RP["Razorpay Sandbox (UPI / Card / Cash)"]
+    subgraph Data ["Data Persistence & Settlement"]
+        Mongo[("MongoDB Atlas Cloud Cluster")]
+        Payment["Razorpay Sandbox Gateway"]
     end
 
-    PH <-->|Live Pins & Status| WS
-    CC <-->|Radar Alerts & Location| WS
-    WS <--> Backend
-    PH -->|HTTP REST| Backend
-    CC -->|HTTP REST| Backend
-    Backend <--> Mongo
-    Backend <--> OSRM
-    Backend <--> RP
+    PH <-->|WebSockets| RealTime
+    CC <-->|WebSockets| RealTime
+    RealTime <--> Services
+    PH -->|REST API| Services
+    CC -->|REST API| Services
+    Services <--> Mongo
+    Services <--> OSRM
+    Services <--> Payment
 ```
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technologies Used | Purpose |
+| Layer | Technologies | Purpose |
 |---|---|---|
-| **Frontend** | React 18, Vite 5, SCSS/SASS, HTML5 Geolocation | Ultra-fast single page application with modern dark-mode aesthetics |
-| **GIS & Mapping** | Leaflet.js, OpenStreetMap Tiles, OSRM Routing Engine | 100% free road routing, geocoding, and polyline visualization without Google Maps API keys |
-| **Backend** | Node.js v20 LTS, Express.js | High-throughput asynchronous RESTful API services |
-| **Real-Time** | Socket.IO 4.7 | Duplex WebSocket mesh for radar broadcasts and live vehicle telemetry |
-| **Database** | MongoDB Atlas, Mongoose ODM | Distributed cloud NoSQL document database with strict schema validation |
-| **Security** | JWT (24h tokens), BCrypt.js, 4-Digit OTP | Session management and mutual physical ride-start verification |
-| **Payments** | Razorpay SDK Sandbox | Digital simulated checkout supporting UPI, Credit/Debit Cards, NetBanking, and Cash |
-| **Cloud Hosting** | Vercel (Edge CDN), Render Cloud, GitHub CI/CD | Fully automated zero-downtime deployment pipeline |
+| **Frontend** | React 18, Vite 5, SCSS/SASS | Component-driven SPA with instant hot-module replacement and dark-mode styling |
+| **Mapping & GIS** | Leaflet.js 1.9, OpenStreetMap, OSRM API | High-DPI interactive maps, custom markers, and real road driving calculations |
+| **Backend** | Node.js v20 LTS, Express.js | High-concurrency asynchronous RESTful API services |
+| **Real-Time** | Socket.IO 4.7 | Full-duplex WebSocket event mesh for live driver telemetry and radar matching |
+| **Database** | MongoDB Atlas, Mongoose ODM | Distributed cloud NoSQL document store with strict schema models |
+| **Security** | JWT (JSON Web Tokens), BCrypt.js, 4-Digit OTP | Session management and mutual ride start handshake verification |
+| **Payments** | Razorpay SDK (Sandbox) | Simulated digital payment processing (UPI, Card, Cash) |
+| **DevOps & Cloud** | Vercel (Frontend), Render (Backend), GitHub Actions | Automated CI/CD deployment with global edge CDN caching |
 
 ---
 
-## 📱 How It Works (Step-by-Step)
+## 📱 User Workflow
 
 ### Passenger Experience:
-1. **Search Locations:** Enter pickup and drop addresses; smart autocomplete restricts suggestions strictly within 75 km of your city.
-2. **Choose Vehicle:** Select between **Tripzy Moto (Bike)**, **Auto**, **Sedan (Go)**, or **SUV (Premier)**, reviewing upfront fares and grams of CO₂ saved.
-3. **Customize:** Opt for AC comfort or pre-lock a **Guaranteed Return Ride** at 0% surge.
-4. **Receive 4-Digit Security PIN:** Upon booking, receive a private 4-digit PIN on screen.
-5. **Live Tracking & Payment:** Watch the driver approach in real time on the interactive map; pay via Razorpay (UPI/Card) or Cash on trip completion.
+1. **Search:** Enter pickup and drop-off addresses with auto-suggest filtered strictly within 75 km.
+2. **Select Tier:** Compare Bike Taxi, Auto, Sedan, or SUV with upfront fares and CO₂ displacement stats.
+3. **Customize:** Toggle AC comfort preference or pre-lock a Guaranteed Return Ride.
+4. **Security Handshake:** Receive a private 4-digit PIN upon driver assignment.
+5. **Track & Pay:** Watch the driver approach live on the map and complete payment via Razorpay or Cash.
 
-### Captain (Driver) Experience:
-1. **Go Online:** Switch availability status to Online in the Captain Console.
-2. **Transparent Radar Alert:** Receive an incoming ride popup clearly displaying pickup distance, destination area, and estimated earnings.
-3. **Accept & Navigate:** Accept the ride and follow real road directions to the pickup point.
-4. **Enter Passenger PIN:** Ask passenger for their 4-digit PIN; the trip meter will **not** start without this validation.
-5. **Complete Trip:** Navigate to drop-off, click Complete Trip, and collect fare.
+### Driver (Captain) Experience:
+1. **Go Online:** One-click toggle connects the driver to the live dispatch radar mesh.
+2. **Transparent Radar Alert:** Review pickup distance, drop-off destination, and estimated fare upfront.
+3. **Accept & Route:** Accept the ride and follow turn-by-turn road routes to the pickup location.
+4. **PIN Validation:** Enter the rider's 4-digit PIN to activate the trip meter (ride cannot start without it).
+5. **Complete:** Arrive at the destination, finalize the ride, and collect payment.
 
 ---
 
-## 🧪 Automated Testing & Verification
+## 🧪 Automated Testing Suite
 
-Tripzy includes a comprehensive automated integration test suite simulating concurrent passenger bookings, WebSocket radar dispatches, 4-digit PIN verification, and trip completion:
+Tripzy includes an end-to-end integration test runner simulating concurrent passenger bookings, WebSocket radar dispatches, 4-digit PIN verification, and trip completion:
 
 ```bash
-# Run the automated End-to-End simulation test
+# Run the automated 12-stage E2E simulation test
 node test_e2e_flow.js
 ```
 
-### Verified Test Stages (100% Passing):
-- [x] Step 1: Health check on backend server
-- [x] Step 2: Passenger registration & JWT authentication
-- [x] Step 3: Driver registration & vehicle profile setup
-- [x] Step 4: Route estimation (`/api/rides/estimate`) with 4 vehicle tiers & CO₂ calculations
-- [x] Step 5: Socket.IO duplex WebSocket connection for passenger and driver
-- [x] Step 6: Driver availability toggle (`driver-online`)
-- [x] Step 7: Passenger ride request creation (`POST /api/rides`)
-- [x] Step 8: Radar alert broadcast and socket reception
-- [x] Step 9: Driver ride acceptance (`driver-accept-ride`)
-- [x] Step 10: 4-Digit Security PIN validation and trip start (`POST /api/rides/:id/start`)
-- [x] Step 11: Real-time driver location telemetry streaming (`driver-location`)
-- [x] Step 12: Trip completion and payment settlement (`POST /api/rides/:id/complete`)
+### Verified Test Matrix (100% Pass Rate):
+- [x] Backend service health check
+- [x] Passenger registration & JWT authentication
+- [x] Driver registration & vehicle profile setup
+- [x] Multi-tier route estimation (`/api/rides/estimate`) with CO₂ offset calculations
+- [x] Socket.IO bi-directional WebSocket handshake
+- [x] Driver availability status toggling (`driver-online`)
+- [x] Passenger ride request creation (`POST /api/rides`)
+- [x] Radar dispatch broadcast to nearby drivers
+- [x] Driver ride acceptance event handling (`driver-accept-ride`)
+- [x] Mutual 4-digit PIN validation and trip meter initiation (`POST /api/rides/:id/start`)
+- [x] Real-time vehicle location telemetry broadcasting (`driver-location`)
+- [x] Trip settlement and state finalization (`POST /api/rides/:id/complete`)
 
 ---
 
-## 💻 Local Installation & Setup
+## 💻 Local Setup & Development
 
 ### Prerequisites
-- Node.js (v18.0 or higher)
-- npm (v9.0 or higher)
-- MongoDB Atlas cluster URI or local MongoDB instance
+- Node.js (v18+)
+- npm (v9+)
+- MongoDB Atlas database URI or local MongoDB instance
 
 ### 1. Clone the Repository
 ```bash
@@ -186,15 +147,15 @@ Create a `.env` file in `backend/`:
 ```env
 PORT=5000
 MONGODB_URI=your_mongodb_atlas_connection_string
-JWT_SECRET=your_super_secret_jwt_key
-RAZORPAY_KEY_ID=rzp_test_your_key_id
-RAZORPAY_KEY_SECRET=your_key_secret
+JWT_SECRET=your_jwt_secret_key
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_secret
 ```
 
-Start the backend development server:
+Start the backend server:
 ```bash
 npm run dev
-# Server runs on http://localhost:5000
+# Server running at http://localhost:5000
 ```
 
 ### 3. Frontend Setup
@@ -203,23 +164,13 @@ cd ../frontend
 npm install
 ```
 
-Start the frontend development server:
+Start the Vite development client:
 ```bash
 npm run dev
-# Client runs on http://localhost:5173
+# Client running at http://localhost:5173
 ```
 
 ---
 
-## 👥 Capstone Project Information
-
-- **Project:** Tripzy — Real-Time Sustainable Ride-Sharing Platform
-- **Review Stage:** Project Review 3 (Literature Synthesis, System Implementation & Testing)
-- **Course:** Final Year Engineering Capstone Design Project
-- **Department:** Department of Computer Science & Engineering
-- **Team:** Group 12
-
----
-
 ## 📜 License
-Distributed under the MIT License. Developed for educational and research evaluation.
+Distributed under the MIT License. See `LICENSE` for more information.
