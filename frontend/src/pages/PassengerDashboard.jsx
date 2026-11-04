@@ -24,6 +24,15 @@ export default function PassengerDashboard() {
   const [routeGeometry, setRouteGeometry] = useState(null);
   const [ride, setRide] = useState(null);
   const [driverLoc, setDriverLoc] = useState(null);
+  const [estimates, setEstimates] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState('bike');
+  
+  // Bilateral Return Trip Lock states
+  const [lockReturnTrip, setLockReturnTrip] = useState(false);
+  const [returnTimeWindow, setReturnTimeWindow] = useState('In 2 Hours (~10:30 PM)');
+  const [checkingReturn, setCheckingReturn] = useState(false);
+  const [returnDriverMatch, setReturnDriverMatch] = useState(null);
+  const [lockedReturnRide, setLockedReturnRide] = useState(null);
   
   // Idle drivers list
   const [nearbyDrivers, setNearbyDrivers] = useState([]);
@@ -205,7 +214,7 @@ export default function PassengerDashboard() {
   const calculateRoute = async () => {
     setSearchingRoute(true);
     try {
-      const res = await fetch('/api/rides', {
+      const res = await fetch('/api/rides/estimate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -213,9 +222,7 @@ export default function PassengerDashboard() {
         },
         body: JSON.stringify({
           pickupLoc,
-          pickupAddress,
-          dropLoc,
-          dropAddress
+          dropLoc
         })
       });
       
@@ -223,15 +230,58 @@ export default function PassengerDashboard() {
       if (res.ok) {
         setDistanceKm(data.distanceKm);
         setDurationMin(data.durationMin);
-        setFare(data.fare);
         setRouteGeometry(data.routeGeometry);
+        setEstimates(data.estimates);
+        const currentFare = data.estimates[selectedVehicle]?.fare || data.estimates.sedan.fare;
+        setFare(currentFare);
       } else {
-        alert(data.message || 'Route calculation failed.');
+        alert(data.message || 'Route estimation failed.');
       }
     } catch (err) {
-      console.error('Routing calculation error:', err);
+      console.error('Routing estimate error:', err);
     } finally {
       setSearchingRoute(false);
+    }
+  };
+
+  const handleSelectVehicle = (vType) => {
+    setSelectedVehicle(vType);
+    if (estimates && estimates[vType]) {
+      setFare(estimates[vType].fare);
+    }
+  };
+
+  const handleToggleReturnLock = async (enabled) => {
+    setLockReturnTrip(enabled);
+    if (!enabled) {
+      setReturnDriverMatch(null);
+      return;
+    }
+
+    setCheckingReturn(true);
+    try {
+      const res = await fetch('/api/rides/return-lock/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          returnPickupAddress: dropAddress,
+          returnDropAddress: pickupAddress,
+          targetTime: returnTimeWindow
+        })
+      });
+      const data = await res.json();
+      if (data.matched) {
+        setReturnDriverMatch(data.driver);
+      } else {
+        setReturnDriverMatch(null);
+      }
+    } catch (err) {
+      console.error('Check return lock error:', err);
+    } finally {
+      setCheckingReturn(false);
     }
   };
 
@@ -320,7 +370,8 @@ export default function PassengerDashboard() {
           pickupLoc,
           pickupAddress,
           dropLoc,
-          dropAddress
+          dropAddress,
+          vehicleType: selectedVehicle
         })
       });
 
@@ -329,6 +380,35 @@ export default function PassengerDashboard() {
         setRide(data);
         if (socket) {
           socket.emit('ride:join', { rideId: data._id });
+        }
+
+        // If Forward Contract Return Lock was agreed with committed driver, book return ride
+        if (lockReturnTrip && returnDriverMatch) {
+          try {
+            const returnRes = await fetch('/api/rides/return-lock/book', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                outboundRideId: data._id,
+                returnPickupLoc: dropLoc,
+                returnPickupAddress: dropAddress,
+                returnDropLoc: pickupLoc,
+                returnDropAddress: pickupAddress,
+                driverId: returnDriverMatch.driverId,
+                returnScheduledTime: returnTimeWindow,
+                lockedFare: returnDriverMatch.lockedFare
+              })
+            });
+            const returnData = await returnRes.json();
+            if (returnRes.ok) {
+              setLockedReturnRide(returnData.returnRide);
+            }
+          } catch (returnErr) {
+            console.error('Return trip booking error:', returnErr);
+          }
         }
       } else {
         alert(data.message || 'Ride request failed.');
@@ -556,18 +636,122 @@ export default function PassengerDashboard() {
               <div className="fare-quote-card animate-slide">
                 <div className="route-summary">
                   <span>📏 {distanceKm} km</span>
-                  <span>⏱️ {durationMin} mins</span>
+                  <span>⏱️ ~{durationMin} mins</span>
                 </div>
+
+                {/* Academic Vehicle Category & Eco Selector */}
+                {estimates && (
+                  <div className="vehicle-selector-group">
+                    {Object.values(estimates).map((v) => (
+                      <div
+                        key={v.vehicleType}
+                        className={`vehicle-card ${selectedVehicle === v.vehicleType ? 'selected' : ''}`}
+                        onClick={() => handleSelectVehicle(v.vehicleType)}
+                      >
+                        <div className="vehicle-left">
+                          <span className="vehicle-icon">{v.icon}</span>
+                          <div className="vehicle-info">
+                            <span className="vehicle-name">{v.name}</span>
+                            <span className="vehicle-desc">{v.capacity} • {v.description}</span>
+                            {v.carbonSavedGrams > 0 && (
+                              <span className="eco-tag">🌿 Saves ~{v.carbonSavedGrams}g CO₂</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="vehicle-right">
+                          <span className="vehicle-fare">₹{v.fare}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Bilateral Return Trip Shield Toggle (Bilateral Forward Contract) */}
+                <div className="return-shield-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>🛡️</span>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#fff' }}>Lock Return Trip (Surge Shield)</div>
+                        <div style={{ fontSize: '0.74rem', color: '#9ca3af' }}>Only locks if a driver pre-committed availability • 0% Surge</div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={lockReturnTrip}
+                      onChange={(e) => handleToggleReturnLock(e.target.checked)}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#6366f1' }}
+                    />
+                  </div>
+
+                  {lockReturnTrip && (
+                    <div className="return-shield-details animate-slide">
+                      <div style={{ fontSize: '0.78rem', color: '#c084fc', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
+                        Select Return Time Window:
+                      </div>
+                      <select
+                        value={returnTimeWindow}
+                        onChange={(e) => {
+                          setReturnTimeWindow(e.target.value);
+                          handleToggleReturnLock(true);
+                        }}
+                        style={{ width: '100%', padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', marginBottom: '8px', fontSize: '0.85rem' }}
+                      >
+                        <option value="In 2 Hours (~10:30 PM)">In 2 Hours (~10:30 PM)</option>
+                        <option value="In 3 Hours (~11:30 PM)">In 3 Hours (~11:30 PM)</option>
+                        <option value="Midnight (~12:00 AM)">Midnight (~12:00 AM)</option>
+                        <option value="Late Night (~01:00 AM)">Late Night (~01:00 AM)</option>
+                      </select>
+
+                      {checkingReturn && (
+                        <div style={{ fontSize: '0.82rem', color: '#fbbf24', textAlign: 'center', padding: '6px' }}>
+                          🔍 Searching for pre-committed backhaul drivers in {dropAddress.split(',')[0]}...
+                        </div>
+                      )}
+
+                      {!checkingReturn && returnDriverMatch && (
+                        <div className="return-match-success animate-slide">
+                          <div style={{ color: '#4ade80', fontWeight: 700, fontSize: '0.85rem' }}>
+                            ✅ Pre-Committed Return Driver Found!
+                          </div>
+                          <div style={{ fontSize: '0.82rem', color: '#e5e7eb', marginTop: '4px' }}>
+                            👨🏻‍✈️ <strong>{returnDriverMatch.name}</strong> • {returnDriverMatch.vehicleName}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                            Corridor: {returnDriverMatch.headingZone} • ⭐ {returnDriverMatch.rating}
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', paddingTop: '6px', borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                            <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Guaranteed Return Fare:</span>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#4ade80' }}>₹{returnDriverMatch.lockedFare} <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>(0% Surge)</span></span>
+                          </div>
+                        </div>
+                      )}
+
+                      {!checkingReturn && !returnDriverMatch && (
+                        <div className="return-match-empty animate-slide">
+                          <div style={{ color: '#f59e0b', fontSize: '0.82rem', fontWeight: 600 }}>
+                            ℹ️ No driver pre-committed for this corridor yet.
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px' }}>
+                            Zero phantom bookings: No upfront fees charged. Standard spot dispatch will apply for your return.
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="fare-price">
                   <span>₹</span>{fare}
-                  <span>est. fare</span>
+                  <span>est. total fare</span>
                 </div>
+
                 <button
                   onClick={handleRequestRide}
                   className="btn btn-primary"
                   style={{ width: '100%', padding: '14px' }}
                 >
-                  Book Tripzy Now
+                  Book Tripzy {estimates ? estimates[selectedVehicle]?.name : 'Ride'}
                 </button>
               </div>
             )}
@@ -603,10 +787,37 @@ export default function PassengerDashboard() {
           <div className="trip-active-panel animate-slide">
             <div className={`trip-status-badge status-${ride.status}`}>
               {ride.status === 'accepted' && 'Driver Assigned'}
-              {ride.status === 'arrived' && 'Driver Arrived'}
+              {ride.status === 'arrived' && 'Driver Arrived at Pickup'}
               {ride.status === 'started' && 'Trip In Progress'}
               {ride.status === 'completed' && 'Trip Finished'}
             </div>
+
+            {/* Safety Verification PIN Card */}
+            {ride.startOtp && (ride.status === 'accepted' || ride.status === 'arrived') && (
+              <div className="security-pin-card animate-slide">
+                <div className="pin-label">🔐 Start Trip Security PIN</div>
+                <div className="pin-digits">{ride.startOtp}</div>
+                <div className="pin-hint">Share this 4-digit PIN with your driver to start the trip securely</div>
+              </div>
+            )}
+
+            {/* Academic Green Routing Eco Badge */}
+            {ride.carbonSavedGrams > 0 && (
+              <div className="eco-impact-banner">
+                <span>🌱</span>
+                <span><strong>Eco-Benefit:</strong> Offsetting ~{ride.carbonSavedGrams}g CO₂ compared to a private car ride!</span>
+              </div>
+            )}
+
+            {/* Bilateral Return Trip Locked Forward Contract Confirmation */}
+            {(lockedReturnRide || ride.isReturnLocked) && (
+              <div style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.35)', borderRadius: '10px', padding: '10px 12px', fontSize: '0.82rem', color: '#c7d2fe' }} className="animate-slide">
+                <div>🛡️ <strong>Bilateral Forward Contract:</strong> Return Trip Locked!</div>
+                <div style={{ fontSize: '0.75rem', color: '#a5b4fc', marginTop: '3px' }}>
+                  A guaranteed return driver is locked for <strong>{lockedReturnRide?.returnScheduledTime || 'Tonight'}</strong> at <strong>₹{lockedReturnRide?.fare || 350}</strong> (0% Surge Shield).
+                </div>
+              </div>
+            )}
 
             {/* Driver Profile Summary */}
             {ride.driverId && (

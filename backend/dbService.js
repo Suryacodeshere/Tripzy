@@ -178,6 +178,29 @@ export const dbService = {
     }).populate('userId');
   },
 
+  // Backhaul Driver Forward Commitment Search
+  async findCommittedBackhaulDrivers({ sourceZone, headingZone }) {
+    if (isDemoMode) {
+      return memoryDb.driverProfiles.filter(p => {
+        if (!p.backhaulCommitment || !p.backhaulCommitment.isActive) return false;
+        if (sourceZone && p.backhaulCommitment.sourceZone) {
+          const s1 = p.backhaulCommitment.sourceZone.toLowerCase();
+          const s2 = sourceZone.toLowerCase();
+          // Flexible match on city/landmark substring
+          const match = s1.includes(s2) || s2.includes(s1) || s1.split(' ').some(w => w.length > 3 && s2.includes(w));
+          if (!match) return false;
+        }
+        return true;
+      }).map(p => {
+        const user = memoryDb.users.find(u => u._id.toString() === p.userId.toString());
+        return { ...p, userId: user };
+      });
+    }
+
+    const filter = { 'backhaulCommitment.isActive': true };
+    return await DriverProfile.find(filter).populate('userId');
+  },
+
   // RIDE OPERATIONS
   async createRide(rideData) {
     if (isDemoMode) {

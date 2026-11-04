@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import io from 'socket.io-client';
 import Auth from './pages/Auth.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 import PassengerDashboard from './pages/PassengerDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
@@ -136,12 +137,29 @@ export default function App() {
         <div className="app-container">
           {/* Navigation Header */}
           {token && user && (
-            <header className="navbar">
-              <Link to="/" className="logo">
-                <span>🚗</span> Tripzy
+            <header className="navbar marlin-nav-bar">
+              <Link to="/" className="logo marlin-brand">
+                <span className="logo-badge">🚕</span> Tripzy <em>Taxi</em>
               </Link>
               <div className="nav-links">
-                {user.role === 'admin' && <Link to="/admin" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>Admin Stats</Link>}
+                <Link to="/" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
+                  🌐 Public Website
+                </Link>
+                {user.role === 'passenger' && (
+                  <Link to="/passenger" className="btn btn-taxi" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+                    🚖 Map Dashboard
+                  </Link>
+                )}
+                {user.role === 'driver' && (
+                  <Link to="/driver" className="btn btn-taxi" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+                    👨🏻‍✈️ Driver Hub
+                  </Link>
+                )}
+                {user.role === 'admin' && (
+                  <Link to="/admin" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
+                    Admin Stats
+                  </Link>
+                )}
                 <div className="user-info">
                   <span>{user.name}</span>
                   <span className={`badge ${user.role}`}>{user.role}</span>
@@ -154,22 +172,9 @@ export default function App() {
           )}
 
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={!token ? <Auth /> : <Navigate to="/" replace />} />
             
-            <Route path="/" element={
-              token && user ? (
-                user.role === 'driver' ? (
-                  <Navigate to="/driver" replace />
-                ) : user.role === 'admin' ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <Navigate to="/passenger" replace />
-                )
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } />
-
             <Route path="/passenger" element={
               <ProtectedRoute allowedRoles={['passenger']}>
                 <PassengerDashboard />

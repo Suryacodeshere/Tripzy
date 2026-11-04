@@ -18,6 +18,16 @@ const driverProfileSchema = new Schema({
   vehicleName: { type: String, required: true },
   vehicleNumber: { type: String, required: true },
   vehicleType: { type: String, enum: ['auto', 'bike', 'sedan', 'suv'], default: 'sedan' },
+  headingCorridor: { type: String, default: '' }, // Preferred destination/heading to avoid deadheading
+  // Bilateral Forward Contract: Backhaul / Return Trip Commitment
+  backhaulCommitment: {
+    isActive: { type: Boolean, default: false },
+    sourceZone: { type: String, default: '' },
+    headingZone: { type: String, default: '' },
+    availableTime: { type: String, default: '' },
+    approxFairFare: { type: Number, default: 0 },
+    notes: { type: String, default: '' }
+  },
   isOnline: { type: Boolean, default: false },
   // currentLoc: GeoJSON Point: { type: "Point", coordinates: [longitude, latitude] }
   currentLoc: {
@@ -71,6 +81,15 @@ const rideSchema = new Schema({
     enum: ['requested', 'accepted', 'arrived', 'started', 'completed', 'paid', 'cancelled'],
     default: 'requested'
   },
+  vehicleType: { type: String, enum: ['bike', 'auto', 'sedan', 'suv'], default: 'sedan' },
+  startOtp: { type: String, default: null }, // Safety verification PIN
+  carbonSavedGrams: { type: Number, default: 0 }, // Academic green routing metric
+  surgeMultiplier: { type: Number, default: 1.0 },
+  // Bilateral Forward Contract: Return Trip Shield
+  isReturnLocked: { type: Boolean, default: false },
+  returnScheduledTime: { type: String, default: null },
+  returnDriverId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+  returnLockFare: { type: Number, default: null },
   distanceKm: { type: Number, required: true },
   durationMin: { type: Number, required: true },
   fare: { type: Number, required: true },

@@ -5,10 +5,65 @@ import { socketEmitter } from '../socket.js';
 
 const router = express.Router();
 
-// Fare configurations
-const FARE_BASE = 50.00; // Base fare in INR
-const FARE_PER_KM = 12.00; // Fare per km in INR
-const FARE_PER_MIN = 2.00; // Fare per minute in INR
+// Multi-Tier Vehicle Pricing Models (Differentiating Bike/Rapido vs Auto vs Sedan vs SUV)
+export const VEHICLE_CONFIGS = {
+  bike: {
+    id: 'bike',
+    name: 'Tripzy Moto (Bike)',
+    baseFare: 20.00,
+    perKm: 7.00,
+    perMin: 1.00,
+    co2PerKmGrams: 45, // Bike emits 45g CO2/km vs 150g for private car
+    icon: '🛵',
+    capacity: '1 Rider',
+    description: 'Fastest through traffic • Lowest price'
+  },
+  auto: {
+    id: 'auto',
+    name: 'Tripzy Auto',
+    baseFare: 30.00,
+    perKm: 10.00,
+    perMin: 1.50,
+    co2PerKmGrams: 75, // CNG Auto emits 75g CO2/km
+    icon: '🛺',
+    capacity: '3 Riders',
+    description: 'Everyday budget city commute'
+  },
+  sedan: {
+    id: 'sedan',
+    name: 'Tripzy Go (Sedan)',
+    baseFare: 50.00,
+    perKm: 13.00,
+    perMin: 2.00,
+    co2PerKmGrams: 140,
+    icon: '🚗',
+    capacity: '4 Riders',
+    description: 'Comfortable air-conditioned ride'
+  },
+  suv: {
+    id: 'suv',
+    name: 'Tripzy Premier (SUV)',
+    baseFare: 75.00,
+    perKm: 17.00,
+    perMin: 2.50,
+    co2PerKmGrams: 180,
+    icon: '🚙',
+    capacity: '6 Riders',
+    description: 'Spacious for groups and extra luggage'
+  }
+};
+
+// Benchmark baseline: single occupancy private petrol car emits ~150g CO2/km
+const BASELINE_CAR_CO2_PER_KM = 150;
+
+export function calculateVehicleFare(vehicleType = 'sedan', distanceKm, durationMin, surge = 1.0) {
+  const cfg = VEHICLE_CONFIGS[vehicleType] || VEHICLE_CONFIGS.sedan;
+  const rawFare = (cfg.baseFare + (distanceKm * cfg.perKm) + (durationMin * cfg.perMin)) * surge;
+  const fare = Math.round(rawFare);
+  // Academic carbon offset metric (grams of CO2 saved compared to a single-occupancy petrol car)
+  const carbonSavedGrams = Math.max(0, Math.round((BASELINE_CAR_CO2_PER_KM - cfg.co2PerKmGrams) * distanceKm));
+  return { fare, carbonSavedGrams, config: cfg };
+}
 
 // Helper: Calculate route from OSRM or fallback
 async function getRouteDetails(pickupCoords, dropCoords) {
@@ -52,9 +107,50 @@ async function getRouteDetails(pickupCoords, dropCoords) {
   };
 }
 
+// POST /api/rides/estimate (Route preview without creating a ride)
+router.post('/estimate', authenticateToken, async (req, res) => {
+  const { pickupLoc, dropLoc } = req.body;
+
+  if (!pickupLoc || !pickupLoc.coordinates || !dropLoc || !dropLoc.coordinates) {
+    return res.status(400).json({ message: 'Pickup and drop-off coordinates are required for route estimation.' });
+  }
+
+  try {
+    const { distanceKm, durationMin, geometry } = await getRouteDetails(
+      pickupLoc.coordinates,
+      dropLoc.coordinates
+    );
+
+    // Compute tiered fares and carbon metrics for all vehicle classes
+    const estimates = {};
+    for (const [key, cfg] of Object.entries(VEHICLE_CONFIGS)) {
+      const calc = calculateVehicleFare(key, distanceKm, durationMin);
+      estimates[key] = {
+        vehicleType: key,
+        name: cfg.name,
+        icon: cfg.icon,
+        capacity: cfg.capacity,
+        description: cfg.description,
+        fare: calc.fare,
+        carbonSavedGrams: calc.carbonSavedGrams
+      };
+    }
+
+    res.json({
+      distanceKm,
+      durationMin,
+      routeGeometry: geometry,
+      estimates
+    });
+  } catch (error) {
+    console.error('Estimate error:', error);
+    res.status(500).json({ message: 'Failed to calculate route estimate.' });
+  }
+});
+
 // POST /api/rides (Request a Ride)
 router.post('/', authenticateToken, async (req, res) => {
-  const { pickupLoc, pickupAddress, dropLoc, dropAddress } = req.body;
+  const { pickupLoc, pickupAddress, dropLoc, dropAddress, vehicleType = 'sedan' } = req.body;
 
   if (!pickupLoc || !pickupLoc.coordinates || !dropLoc || !dropLoc.coordinates || !pickupAddress || !dropAddress) {
     return res.status(400).json({ message: 'Pickup and drop-off coordinates and addresses are required.' });
@@ -66,11 +162,15 @@ router.post('/', authenticateToken, async (req, res) => {
       dropLoc.coordinates
     );
 
-    // Calculate Fare
-    const fare = +(FARE_BASE + (distanceKm * FARE_PER_KM) + (durationMin * FARE_PER_MIN)).toFixed(2);
+    // Calculate vehicle-specific fare and green carbon metrics
+    const { fare, carbonSavedGrams } = calculateVehicleFare(vehicleType, distanceKm, durationMin);
+
+    // Generate 4-digit start OTP / PIN for safety & verification
+    const startOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
     const ride = await dbService.createRide({
       passengerId: req.user.userId,
+      driverId: null,
       pickupLoc: {
         type: 'Point',
         coordinates: pickupLoc.coordinates
@@ -81,6 +181,10 @@ router.post('/', authenticateToken, async (req, res) => {
         coordinates: dropLoc.coordinates
       },
       dropAddress,
+      vehicleType,
+      startOtp,
+      carbonSavedGrams,
+      surgeMultiplier: 1.0,
       distanceKm,
       durationMin,
       fare,
@@ -230,6 +334,14 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
 
     if (['arrived', 'started', 'completed'].includes(status) && !isDriver) {
       return res.status(403).json({ message: 'Only the assigned driver can update progress.' });
+    }
+
+    // Safety OTP verification before starting trip
+    if (status === 'started' && ride.startOtp) {
+      const providedOtp = (req.body.otp || '').toString().trim();
+      if (providedOtp && providedOtp !== ride.startOtp.toString().trim()) {
+        return res.status(400).json({ message: 'Invalid 4-digit Security PIN. Please ask the passenger for the correct PIN.' });
+      }
     }
 
     const updateFields = { status };
@@ -403,6 +515,139 @@ router.get('/geocode/reverse', async (req, res) => {
     res.json({
       display_name: `Location near (${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)})`
     });
+  }
+});
+
+// -------------------------------------------------------------
+// BILATERAL FORWARD CONTRACT: BACKHAUL RETURN TRIP SHIELD ROUTES
+// -------------------------------------------------------------
+
+// POST /api/rides/return-lock/commit (Driver registers backhaul availability)
+router.post('/return-lock/commit', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'driver') {
+    return res.status(403).json({ message: 'Only driver partners can register backhaul return commitments.' });
+  }
+
+  const { sourceZone, headingZone, availableTime, approxFairFare, notes, isActive = true } = req.body;
+
+  try {
+    const updatedProfile = await dbService.updateDriverProfile(req.user.userId, {
+      backhaulCommitment: {
+        isActive,
+        sourceZone: sourceZone || 'Airport / Event Suburb',
+        headingZone: headingZone || 'City Center Corridor',
+        availableTime: availableTime || 'Tonight ~11:00 PM',
+        approxFairFare: Number(approxFairFare) || 250,
+        notes: notes || 'Zero surge guaranteed backhaul ride'
+      }
+    });
+
+    res.json({
+      message: 'Backhaul return commitment registered successfully!',
+      commitment: updatedProfile.backhaulCommitment
+    });
+  } catch (error) {
+    console.error('Backhaul commit error:', error);
+    res.status(500).json({ message: 'Failed to register backhaul commitment.' });
+  }
+});
+
+// POST /api/rides/return-lock/check (Rider queries if a driver pre-committed for their return corridor)
+router.post('/return-lock/check', authenticateToken, async (req, res) => {
+  const { returnPickupAddress, returnDropAddress } = req.body;
+
+  try {
+    // Find driver profiles where backhaul is active and source zone matches destination
+    const committedDrivers = await dbService.findCommittedBackhaulDrivers({
+      sourceZone: returnPickupAddress,
+      headingZone: returnDropAddress
+    });
+
+    if (!committedDrivers || committedDrivers.length === 0) {
+      return res.json({
+        matched: false,
+        message: 'No driver has pre-registered for this return corridor yet. Regular spot booking will be available.'
+      });
+    }
+
+    // Pick top matched driver (or highest rating)
+    const matched = committedDrivers[0];
+    const commitment = matched.backhaulCommitment;
+    const driverUser = matched.userId || {};
+
+    res.json({
+      matched: true,
+      message: 'Driver found with pre-committed return availability!',
+      driver: {
+        driverId: driverUser._id || matched.userId,
+        name: driverUser.name || 'Verified Driver Partner',
+        vehicleName: matched.vehicleName,
+        vehicleNumber: matched.vehicleNumber,
+        rating: matched.rating || 5.0,
+        availableTime: commitment.availableTime,
+        lockedFare: commitment.approxFairFare,
+        headingZone: commitment.headingZone,
+        sourceZone: commitment.sourceZone
+      }
+    });
+  } catch (error) {
+    console.error('Check return lock error:', error);
+    res.status(500).json({ message: 'Error checking for backhaul drivers.' });
+  }
+});
+
+// POST /api/rides/return-lock/book (Lock the forward contract return ride)
+router.post('/return-lock/book', authenticateToken, async (req, res) => {
+  const {
+    outboundRideId,
+    returnPickupLoc,
+    returnPickupAddress,
+    returnDropLoc,
+    returnDropAddress,
+    driverId,
+    returnScheduledTime,
+    lockedFare
+  } = req.body;
+
+  if (!returnPickupLoc || !returnDropLoc || !driverId) {
+    return res.status(400).json({ message: 'Return pickup, drop location and committed driver are required.' });
+  }
+
+  try {
+    const returnRide = await dbService.createRide({
+      passengerId: req.user.userId,
+      driverId: driverId,
+      pickupLoc: returnPickupLoc,
+      pickupAddress: returnPickupAddress,
+      dropLoc: returnDropLoc,
+      dropAddress: returnDropAddress,
+      distanceKm: 12.0,
+      durationMin: 25,
+      fare: lockedFare,
+      vehicleType: 'sedan',
+      status: 'accepted', // Pre-accepted by bilateral contract
+      isReturnLocked: true,
+      returnScheduledTime: returnScheduledTime || 'Tonight ~11:00 PM',
+      returnDriverId: driverId,
+      returnLockFare: lockedFare,
+      startOtp: Math.floor(1000 + Math.random() * 9000).toString(),
+      carbonSavedGrams: 350
+    });
+
+    // Notify driver of locked forward booking via socket
+    try {
+      socketEmitter.notifyDriverOfRideRequest(driverId.toString(), returnRide);
+    } catch (e) {
+      // socket non-blocking
+    }
+
+    res.status(201).json({
+      message: 'Return trip successfully locked at guaranteed non-surge fare!',
+      returnRide
+    });
+  } catch (error) {
+    console.error('Book return lock error:', error);
+    res.status(500).json({ message: 'Failed to book return lock.' });
   }
 });
 

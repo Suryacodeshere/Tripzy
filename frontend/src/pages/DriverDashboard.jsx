@@ -26,6 +26,15 @@ export default function DriverDashboard() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
+  const [enteredOtp, setEnteredOtp] = useState('');
+
+  // Backhaul Return Corridor Planner states
+  const [backhaulActive, setBackhaulActive] = useState(driverProfile?.backhaulCommitment?.isActive || false);
+  const [sourceZone, setSourceZone] = useState(driverProfile?.backhaulCommitment?.sourceZone || 'Airport / Event Suburb');
+  const [headingZone, setHeadingZone] = useState(driverProfile?.backhaulCommitment?.headingZone || 'Indiranagar / MG Road');
+  const [availableTime, setAvailableTime] = useState(driverProfile?.backhaulCommitment?.availableTime || 'Tonight ~11:00 PM');
+  const [approxFairFare, setApproxFairFare] = useState(driverProfile?.backhaulCommitment?.approxFairFare || 350);
+  const [savingBackhaul, setSavingBackhaul] = useState(false);
 
   // Sync state with local profile
   useEffect(() => {
@@ -244,6 +253,11 @@ export default function DriverDashboard() {
   const handleUpdateStatus = async (nextStatus) => {
     if (!activeRide) return;
 
+    if (nextStatus === 'started' && activeRide.startOtp && !enteredOtp) {
+      alert('Please ask the passenger for the 4-digit security PIN to start the trip.');
+      return;
+    }
+
     try {
       const res = await fetch(`/api/rides/${activeRide._id}/status`, {
         method: 'PATCH',
@@ -251,11 +265,15 @@ export default function DriverDashboard() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ status: nextStatus })
+        body: JSON.stringify({ 
+          status: nextStatus,
+          otp: nextStatus === 'started' ? enteredOtp : undefined
+        })
       });
       const data = await res.json();
       if (res.ok) {
         setActiveRide(data.ride);
+        if (nextStatus === 'started') setEnteredOtp('');
       } else {
         alert(data.message || 'Failed to update ride status.');
       }
@@ -287,6 +305,37 @@ export default function DriverDashboard() {
       }
     } catch (err) {
       console.error('Submit rating error:', err);
+    }
+  };
+
+  const handleSaveBackhaul = async (activate) => {
+    setSavingBackhaul(true);
+    try {
+      const res = await fetch('/api/rides/return-lock/commit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          sourceZone,
+          headingZone,
+          availableTime,
+          approxFairFare: Number(approxFairFare),
+          isActive: activate
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBackhaulActive(activate);
+        alert(activate ? '✅ Backhaul availability active! Passengers will be matched for locked return trips.' : 'Backhaul commitment deactivated.');
+      } else {
+        alert(data.message || 'Failed to update backhaul.');
+      }
+    } catch (err) {
+      console.error('Backhaul error:', err);
+    } finally {
+      setSavingBackhaul(false);
     }
   };
 
@@ -322,6 +371,79 @@ export default function DriverDashboard() {
             <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>
               Your live coordinates are broadcasting to passengers within 3km.
             </p>
+          </div>
+        )}
+
+        {/* Backhaul Return Corridor Planner (Bilateral Forward Contract) */}
+        {!activeRide && (
+          <div className="backhaul-planner-card animate-slide">
+            <div className="backhaul-header">
+              <h4>🛡️ Backhaul Return Planner</h4>
+              <span style={{ fontSize: '0.72rem', background: backhaulActive ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.1)', color: backhaulActive ? '#4ade80' : '#9ca3af', padding: '2px 8px', borderRadius: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
+                {backhaulActive ? 'Active' : 'Standby'}
+              </span>
+            </div>
+            <p style={{ fontSize: '0.76rem', color: '#9ca3af', lineHeight: 1.4 }}>
+              Eliminate deadheading. Declare where and when you will be available to lock in a guaranteed return trip passenger without returning empty.
+            </p>
+
+            <div className="backhaul-form">
+              <div>
+                <label>Drop/Suburb Zone (Starting Area)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Airport / Event Suburb"
+                  value={sourceZone}
+                  onChange={(e) => setSourceZone(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label>Return Heading Corridor (Destination)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Indiranagar / MG Road"
+                  value={headingZone}
+                  onChange={(e) => setHeadingZone(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div>
+                  <label>Time Window</label>
+                  <input
+                    type="text"
+                    value={availableTime}
+                    onChange={(e) => setAvailableTime(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label>Fair Fare (₹)</label>
+                  <input
+                    type="number"
+                    value={approxFairFare}
+                    onChange={(e) => setApproxFairFare(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                <button
+                  onClick={() => handleSaveBackhaul(!backhaulActive)}
+                  disabled={savingBackhaul}
+                  className={`btn ${backhaulActive ? 'btn-danger' : 'btn-primary'}`}
+                  style={{ width: '100%', padding: '10px', fontSize: '0.85rem' }}
+                >
+                  {savingBackhaul ? 'Updating...' : backhaulActive ? 'Deactivate Backhaul' : 'Activate Backhaul Return'}
+                </button>
+              </div>
+
+              {backhaulActive && (
+                <div className="backhaul-status-active">
+                  🟢 <strong>Active:</strong> Matched with passengers returning from <em>{sourceZone}</em> towards <em>{headingZone}</em> at <em>₹{approxFairFare}</em>!
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -369,13 +491,25 @@ export default function DriverDashboard() {
               )}
 
               {activeRide.status === 'arrived' && (
-                <button
-                  onClick={() => handleUpdateStatus('started')}
-                  className="btn btn-success"
-                  style={{ width: '100%', padding: '14px' }}
-                >
-                  🚀 Start Ride Trip
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="driver-pin-input-group animate-slide">
+                    <label>Enter Passenger Safety PIN</label>
+                    <input
+                      type="text"
+                      maxLength={4}
+                      placeholder="• • • •"
+                      value={enteredOtp}
+                      onChange={(e) => setEnteredOtp(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleUpdateStatus('started')}
+                    className="btn btn-success"
+                    style={{ width: '100%', padding: '14px' }}
+                  >
+                    🚀 Verify PIN & Start Trip
+                  </button>
+                </div>
               )}
 
               {activeRide.status === 'started' && (
