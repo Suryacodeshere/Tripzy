@@ -904,6 +904,12 @@ export default function PassengerDashboard() {
                     value={pickupAddress}
                     onChange={(e) => handleSearch(e.target.value, 'pickup')}
                     onFocus={() => setActiveInput('pickup')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && suggestions.length > 0) {
+                        e.preventDefault();
+                        selectSuggestion(suggestions[0]);
+                      }
+                    }}
                   />
                 </div>
                 {activeInput === 'pickup' && suggestions.length > 0 && (
@@ -937,6 +943,12 @@ export default function PassengerDashboard() {
                     value={dropAddress}
                     onChange={(e) => handleSearch(e.target.value, 'drop')}
                     onFocus={() => setActiveInput('drop')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && suggestions.length > 0) {
+                        e.preventDefault();
+                        selectSuggestion(suggestions[0]);
+                      }
+                    }}
                   />
                 </div>
                 {activeInput === 'drop' && suggestions.length > 0 && (

@@ -42,11 +42,10 @@ export default function Map({
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // CartoDB Voyager tiles (high performance, modern street details, reliable CDN)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 20
+    // OpenStreetMap Standard Tiles (100% open-source, completely free, zero API key, no watermarks)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
     }).addTo(map);
 
     mapRef.current = map;
