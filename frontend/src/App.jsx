@@ -213,7 +213,8 @@ export default function App() {
 
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={!token ? <Auth /> : <Navigate to={user?.role === 'driver' ? '/driver' : '/passenger'} replace />} />
+            <Route path="/login" element={<Auth defaultMode="login" />} />
+            <Route path="/register" element={<Auth defaultMode="register" />} />
             
             {/* Allow route preview for both guests and passengers; auth is verified on ride request */}
             <Route path="/passenger" element={<PassengerDashboard />} />

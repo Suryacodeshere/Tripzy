@@ -262,6 +262,8 @@ export default function LandingPage() {
             ) : (
               <div className="guest-action-group">
                 <Link to="/login" className="btn-rapido-link">Login</Link>
+                <Link to="/register?role=passenger" className="btn-rapido-outline" style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: 600 }}>Sign Up</Link>
+                <Link to="/register?role=driver" className="btn-rapido-outline" style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: 600, background: '#FEF3C7', color: '#92400E', borderColor: '#FCD34D' }}>Drive with Us</Link>
                 <button onClick={handleBookClick} className="btn-rapido-black">
                   Book Ride
                 </button>
@@ -385,7 +387,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right Column: Fleet Visual Graphic (Bike, Auto, Cab) */}
+          {/* Right Column: Fleet Visual Graphic (Realistic Bike Taxi, Auto Rickshaw, Cab Vector Illustrations) */}
           <div className="hero-right-column">
             <div className="hero-image-card">
               <div className="city-backdrop">
@@ -395,39 +397,144 @@ export default function LandingPage() {
                 <div className="building b4"></div>
               </div>
 
-              {/* Composition of Vehicles */}
+              {/* Dynamic Feature Floating Badges */}
+              <div className="hero-floating-badges">
+                <div className="hero-pill-badge badge-fast">⚡ 2-Min Fast Pickup</div>
+                <div className="hero-pill-badge badge-pin">🛡️ 4-Digit Security PIN</div>
+                <div className="hero-pill-badge badge-surge">🌿 0% Surge Return Shield</div>
+              </div>
+
+              {/* Composition of Real Vehicle Vector Illustrations */}
               <div className="fleet-illustration-wrapper">
-                {/* Bike Taxi Illustration */}
-                <div className="fleet-vehicle bike-visual">
-                  <div className="driver-helmet"></div>
-                  <div className="bike-body">
-                    <span className="badge-text">tripzy</span>
-                  </div>
-                  <div className="wheel wheel-front"></div>
-                  <div className="wheel wheel-back"></div>
+                {/* 1. Bike Taxi (Rapido Motorcycle with Driver Helmet) */}
+                <div className="fleet-card bike-card">
+                  <div className="vehicle-tag">🛵 Bike-Taxi</div>
+                  <svg viewBox="0 0 220 140" className="vehicle-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="110" cy="132" rx="90" ry="6" fill="#000000" fillOpacity="0.14" />
+                    {/* Rear Wheel */}
+                    <circle cx="50" cy="105" r="28" fill="#1F2937" stroke="#111827" strokeWidth="3" />
+                    <circle cx="50" cy="105" r="18" fill="#E5E7EB" stroke="#F59E0B" strokeWidth="4" />
+                    <circle cx="50" cy="105" r="7" fill="#111827" />
+                    <line x1="50" y1="87" x2="50" y2="123" stroke="#9CA3AF" strokeWidth="2" />
+                    <line x1="32" y1="105" x2="68" y2="105" stroke="#9CA3AF" strokeWidth="2" />
+                    {/* Front Wheel */}
+                    <circle cx="170" cy="105" r="28" fill="#1F2937" stroke="#111827" strokeWidth="3" />
+                    <circle cx="170" cy="105" r="18" fill="#E5E7EB" stroke="#F59E0B" strokeWidth="4" />
+                    <circle cx="170" cy="105" r="7" fill="#111827" />
+                    <line x1="170" y1="87" x2="170" y2="123" stroke="#9CA3AF" strokeWidth="2" />
+                    <line x1="152" y1="105" x2="188" y2="105" stroke="#9CA3AF" strokeWidth="2" />
+                    {/* Exhaust pipe */}
+                    <path d="M75 106L110 106L130 96" stroke="#4B5563" strokeWidth="5" strokeLinecap="round" />
+                    <path d="M42 112L90 112" stroke="#9CA3AF" strokeWidth="6" strokeLinecap="round" />
+                    {/* Chassis & Engine */}
+                    <path d="M50 105L85 85L120 100L100 110L65 110Z" fill="#374151" stroke="#111827" strokeWidth="2" />
+                    <rect x="85" y="90" width="22" height="18" rx="3" fill="#1F2937" stroke="#4B5563" strokeWidth="2" />
+                    <line x1="88" y1="94" x2="104" y2="94" stroke="#9CA3AF" strokeWidth="1.5" />
+                    <line x1="88" y1="98" x2="104" y2="98" stroke="#9CA3AF" strokeWidth="1.5" />
+                    <line x1="88" y1="102" x2="104" y2="102" stroke="#9CA3AF" strokeWidth="1.5" />
+                    {/* Front Forks & Mudguard */}
+                    <line x1="170" y1="105" x2="148" y2="52" stroke="#4B5563" strokeWidth="5" strokeLinecap="round" />
+                    <line x1="170" y1="105" x2="150" y2="58" stroke="#F59E0B" strokeWidth="3" strokeLinecap="round" />
+                    <path d="M148 85C155 78 175 78 188 88" stroke="#F59E0B" strokeWidth="5" strokeLinecap="round" />
+                    {/* Fuel Tank */}
+                    <path d="M102 62C108 52 126 50 144 58L148 68L112 75Z" fill="#FDB813" stroke="#111827" strokeWidth="3" strokeLinejoin="round" />
+                    <path d="M112 56C122 54 135 56 142 62" stroke="#FEF08A" strokeWidth="2" strokeLinecap="round" />
+                    {/* Seat */}
+                    <path d="M68 66C75 60 92 60 112 68L110 74L70 72Z" fill="#111827" stroke="#111827" strokeWidth="2" />
+                    {/* Handlebar & Headlamp */}
+                    <path d="M148 52L142 42L132 44" stroke="#111827" strokeWidth="4" strokeLinecap="round" />
+                    <circle cx="132" cy="44" r="3" fill="#F59E0B" />
+                    <path d="M154 55L166 58V68L152 65Z" fill="#FEF08A" stroke="#111827" strokeWidth="2.5" />
+                    {/* Rider with Yellow Helmet */}
+                    <path d="M100 48L112 36C118 34 130 38 132 50L135 60L118 64L105 60Z" fill="#1E293B" stroke="#0F172A" strokeWidth="2" />
+                    <path d="M120 40L138 48L142 44" stroke="#1E293B" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="142" cy="44" r="3.5" fill="#FDB813" />
+                    <circle cx="118" cy="24" r="14" fill="#FDB813" stroke="#111827" strokeWidth="2.5" />
+                    <path d="M120 18C126 18 132 23 131 29H120V18Z" fill="#0F172A" stroke="#111827" strokeWidth="1.5" />
+                    <rect x="110" y="65" width="28" height="8" rx="2" fill="#111827" />
+                    <text x="124" y="71" fill="#FDB813" fontSize="5" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">tripzy</text>
+                  </svg>
+                  <div className="vehicle-name-label">Fastest in Traffic</div>
                 </div>
 
-                {/* Auto Rickshaw Illustration */}
-                <div className="fleet-vehicle auto-visual">
-                  <div className="auto-hood"></div>
-                  <div className="auto-cabin">
-                    <div className="windshield"></div>
-                    <span className="auto-badge">tripzy auto</span>
-                  </div>
-                  <div className="auto-wheel front"></div>
-                  <div className="auto-wheel back"></div>
+                {/* 2. Indian Auto Rickshaw (Iconic Yellow & Green Tuk-Tuk) */}
+                <div className="fleet-card auto-card">
+                  <div className="vehicle-tag">🛺 Auto Rickshaw</div>
+                  <svg viewBox="0 0 220 140" className="vehicle-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="110" cy="132" rx="85" ry="6" fill="#000000" fillOpacity="0.14" />
+                    {/* Rear Wheel */}
+                    <circle cx="65" cy="110" r="22" fill="#1F2937" stroke="#111827" strokeWidth="3" />
+                    <circle cx="65" cy="110" r="13" fill="#E5E7EB" stroke="#F59E0B" strokeWidth="3" />
+                    <circle cx="65" cy="110" r="5" fill="#111827" />
+                    {/* Front Wheel */}
+                    <circle cx="168" cy="110" r="22" fill="#1F2937" stroke="#111827" strokeWidth="3" />
+                    <circle cx="168" cy="110" r="13" fill="#E5E7EB" stroke="#F59E0B" strokeWidth="3" />
+                    <circle cx="168" cy="110" r="5" fill="#111827" />
+                    <path d="M152 95C158 88 176 88 184 96" stroke="#111827" strokeWidth="5" strokeLinecap="round" />
+                    <line x1="168" y1="110" x2="160" y2="76" stroke="#4B5563" strokeWidth="4" />
+                    {/* Lower Body Green */}
+                    <path d="M42 96L55 68H142L162 76L176 96L164 112H50L42 96Z" fill="#059669" stroke="#111827" strokeWidth="3" strokeLinejoin="round" />
+                    <path d="M42 96H176" stroke="#FDB813" strokeWidth="4" />
+                    {/* Passenger Cabin */}
+                    <path d="M68 68V96H114V68H68Z" fill="#111827" />
+                    <rect x="70" y="84" width="22" height="10" rx="2" fill="#D97706" />
+                    <line x1="108" y1="68" x2="108" y2="96" stroke="#D1D5DB" strokeWidth="2.5" />
+                    {/* Driver */}
+                    <circle cx="138" cy="74" r="8" fill="#FDB813" stroke="#111827" strokeWidth="2" />
+                    <path d="M132 82C132 82 138 94 148 94" stroke="#1E293B" strokeWidth="8" strokeLinecap="round" />
+                    {/* Yellow Hood */}
+                    <path d="M46 68C48 40 68 30 115 30C148 30 162 42 165 62L160 68H46Z" fill="#FDB813" stroke="#111827" strokeWidth="3" strokeLinejoin="round" />
+                    <path d="M60 36C85 34 135 34 152 42" stroke="#FEF08A" strokeWidth="3" strokeLinecap="round" />
+                    {/* Windshield */}
+                    <path d="M136 64L148 42H160L155 64H136Z" fill="#BAE6FD" fillOpacity="0.85" stroke="#111827" strokeWidth="2" />
+                    <line x1="146" y1="58" x2="152" y2="48" stroke="#111827" strokeWidth="2" strokeLinecap="round" />
+                    {/* Headlight */}
+                    <circle cx="178" cy="85" r="7" fill="#FEF08A" stroke="#111827" strokeWidth="2" />
+                    <path d="M185 80L205 74V96L185 90Z" fill="#FEF08A" fillOpacity="0.35" />
+                    {/* Badge */}
+                    <rect x="68" y="100" width="38" height="9" rx="2" fill="#111827" />
+                    <text x="87" y="107" fill="#FDB813" fontSize="5.5" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">tripzy auto</text>
+                  </svg>
+                  <div className="vehicle-name-label">Budget City Rides</div>
                 </div>
 
-                {/* City Cab Illustration */}
-                <div className="fleet-vehicle cab-visual">
-                  <div className="cab-roof-sign">TAXI</div>
-                  <div className="cab-glass"></div>
-                  <div className="cab-body">
-                    <span className="cab-badge">tripzy cab</span>
-                  </div>
-                  <div className="cab-wheel front"></div>
-                  <div className="cab-wheel back"></div>
+                {/* 3. City Cab (Modern Sedan Taxi) */}
+                <div className="fleet-card cab-card">
+                  <div className="vehicle-tag">🚕 City Cab</div>
+                  <svg viewBox="0 0 220 140" className="vehicle-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="110" cy="132" rx="95" ry="6" fill="#000000" fillOpacity="0.14" />
+                    {/* Rear Wheel */}
+                    <circle cx="58" cy="108" r="23" fill="#1F2937" stroke="#111827" strokeWidth="3" />
+                    <circle cx="58" cy="108" r="14" fill="#E5E7EB" stroke="#9CA3AF" strokeWidth="3" />
+                    <circle cx="58" cy="108" r="5" fill="#111827" />
+                    {/* Front Wheel */}
+                    <circle cx="166" cy="108" r="23" fill="#1F2937" stroke="#111827" strokeWidth="3" />
+                    <circle cx="166" cy="108" r="14" fill="#E5E7EB" stroke="#9CA3AF" strokeWidth="3" />
+                    <circle cx="166" cy="108" r="5" fill="#111827" />
+                    {/* Main Sedan Body */}
+                    <path d="M22 104L28 84L54 80L80 50H142L178 78L204 88L206 104L196 112H184C182 98 152 98 148 112H76C74 98 44 98 40 112H26L22 104Z" fill="#FFFFFF" stroke="#111827" strokeWidth="3" strokeLinejoin="round" />
+                    {/* TAXI Roof Sign 3D */}
+                    <path d="M96 50L102 38H126L132 50H96Z" fill="#FDB813" stroke="#111827" strokeWidth="2.5" />
+                    <text x="114" y="47" fill="#111827" fontSize="7" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">TAXI</text>
+                    {/* Windows */}
+                    <path d="M58 78L80 54H106V78H58Z" fill="#BAE6FD" fillOpacity="0.8" stroke="#111827" strokeWidth="2" />
+                    <path d="M112 54H138L166 78H112V54Z" fill="#BAE6FD" fillOpacity="0.8" stroke="#111827" strokeWidth="2" />
+                    <circle cx="124" cy="66" r="6" fill="#1E293B" />
+                    {/* Yellow Taxi Side Stripe */}
+                    <path d="M24 92H204V100H24V92Z" fill="#FDB813" />
+                    <text x="114" y="98" fill="#111827" fontSize="5.5" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">TRIPZY CAB</text>
+                    {/* Headlights */}
+                    <path d="M200 88L206 94V100L198 98Z" fill="#FEF08A" stroke="#111827" strokeWidth="1.5" />
+                    <path d="M206 90L222 84V104L206 98Z" fill="#FEF08A" fillOpacity="0.3" />
+                    <line x1="108" y1="54" x2="108" y2="108" stroke="#111827" strokeWidth="2" />
+                  </svg>
+                  <div className="vehicle-name-label">Air Conditioned Comfort</div>
                 </div>
+              </div>
+
+              {/* Asphalt Road Surface with Painted Dashed Markings */}
+              <div className="hero-fleet-road">
+                <div className="road-stripes"></div>
               </div>
             </div>
           </div>
@@ -543,8 +650,8 @@ export default function LandingPage() {
                 <span>✓ Pre-committed Return Rides</span>
                 <span>✓ Flexible Hours</span>
               </div>
-              <Link to="/login" className="btn-rapido-black-large">
-                Register as a Driver ➔
+              <Link to="/register?role=driver" className="btn-rapido-black-large">
+                Register as a Driver Partner ➔
               </Link>
             </div>
             <div className="cta-image-wrapper">

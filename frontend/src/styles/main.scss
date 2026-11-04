@@ -15,6 +15,8 @@ $color-success: #10b981;       // Emerald Green
 $color-success-glow: rgba(16, 185, 129, 0.3);
 $color-danger: #ef4444;        // Crimson Red
 $color-warning: #f59e0b;       // Amber Yellow
+$rapido-yellow: #fdb813;
+$rapido-yellow-hover: #f59e0b;
 
 $text-main: #f3f4f6;
 $text-muted: #9ca3af;
@@ -331,89 +333,489 @@ h1, h2, h3, h4, h5, h6 {
   animation: spin 1s linear infinite;
 }
 
-// Shared Auth Page Styles
-.auth-page {
+// Shared Modern Auth Page Styles (Rapido / Marlin Clean Light Theme)
+.modern-auth-viewport {
+  min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  padding: 24px;
-  background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-              radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
-              $bg-darkest;
+  flex-direction: column;
+  background: radial-gradient(circle at 50% -10%, #fef3c7 0%, transparent 60%),
+              radial-gradient(circle at 10% 90%, #fef9c3 0%, transparent 40%),
+              #f9fafb;
+  font-family: $font-headings;
+  color: #111827;
 
-  .auth-card {
-    width: 100%;
-    max-width: 480px;
-    padding: 40px;
+  .auth-top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 32px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #e5e7eb;
 
-    .auth-header {
-      margin-bottom: 30px;
-      text-align: center;
+    .back-home-link {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #374151;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.15s;
 
-      h2 {
-        font-size: 2.2rem;
-        margin-bottom: 8px;
-        background: linear-gradient(135deg, white, #a5b4fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+      &:hover {
+        color: #111827;
       }
 
-      p {
-        color: $text-muted;
-        font-size: 0.95rem;
+      .arrow {
+        font-size: 1.1rem;
       }
     }
 
-    .role-selector {
-      display: flex;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 4px;
-      border-radius: 12px;
-      margin-bottom: 24px;
-      border: $border-glass;
+    .auth-logo-badge {
+      text-decoration: none;
 
-      button {
-        flex: 1;
-        background: transparent;
-        border: none;
-        color: $text-muted;
-        padding: 10px;
-        border-radius: 8px;
-        font-family: $font-body;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
+      .yellow-pill {
+        background: $rapido-yellow;
+        color: #111827;
+        font-weight: 900;
+        font-size: 1.3rem;
+        padding: 4px 14px;
+        border-radius: 20px;
+        letter-spacing: -0.5px;
+      }
+    }
+  }
 
-        &.active {
-          background: rgba(255, 255, 255, 0.08);
-          color: white;
-          border: $border-glass;
+  .auth-central-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+
+    .modern-auth-card {
+      width: 100%;
+      max-width: 490px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 24px;
+      padding: 36px 32px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.07);
+
+      .modern-auth-header {
+        text-align: center;
+        margin-bottom: 24px;
+
+        .auth-mini-chip {
+          display: inline-block;
+          background: #fef08a;
+          color: #854d0e;
+          font-size: 0.76rem;
+          font-weight: 800;
+          padding: 4px 12px;
+          border-radius: 20px;
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        h2 {
+          font-size: 1.85rem;
+          font-weight: 900;
+          color: #111827;
+          margin-bottom: 6px;
+          letter-spacing: -0.5px;
+        }
+
+        p {
+          color: #6b7280;
+          font-size: 0.92rem;
+          line-height: 1.45;
+          margin: 0;
         }
       }
-    }
 
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+      // Active Session Box
+      .active-session-banner {
+        background: #f0fdf4;
+        border: 1.5px solid #bbf7d0;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
 
-    .auth-footer {
-      margin-top: 24px;
-      text-align: center;
-      font-size: 0.9rem;
-      color: $text-muted;
+        .session-icon {
+          font-size: 1.3rem;
+        }
 
-      span {
-        color: $color-primary;
-        cursor: pointer;
-        font-weight: 600;
-        margin-left: 4px;
-        
-        &:hover {
+        .session-text {
+          font-size: 0.88rem;
+          color: #166534;
+
+          strong {
+            color: #14532d;
+          }
+
+          p {
+            margin: 2px 0 0 0;
+            color: #15803d;
+            font-size: 0.82rem;
+          }
+        }
+
+        .session-actions {
+          display: flex;
+          gap: 8px;
+
+          button {
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+          }
+
+          .btn-switch-account {
+            background: #15803d;
+            color: #ffffff;
+            flex: 1;
+
+            &:hover {
+              background: #166534;
+            }
+          }
+
+          .btn-session-dash {
+            background: #e2e8f0;
+            color: #334155;
+
+            &:hover {
+              background: #cbd5e1;
+            }
+          }
+        }
+      }
+
+      // Mode Switcher Tabs
+      .modern-mode-tabs {
+        display: flex;
+        background: #f3f4f6;
+        border-radius: 14px;
+        padding: 4px;
+        margin-bottom: 20px;
+
+        .mode-tab-btn {
+          flex: 1;
+          background: transparent;
+          border: none;
+          padding: 10px;
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: #6b7280;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &.active {
+            background: #ffffff;
+            color: #111827;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          }
+        }
+      }
+
+      // Role Selector Pills
+      .modern-role-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+
+        .role-pill-btn {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          background: #ffffff;
+          border: 1.5px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 12px 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          .role-icon {
+            font-size: 1.15rem;
+          }
+
+          .role-label {
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: #4b5563;
+          }
+
+          &.active {
+            background: #fef08a;
+            border-color: #facc15;
+
+            .role-label {
+              color: #111827;
+              font-weight: 800;
+            }
+          }
+
+          &:hover:not(.active) {
+            border-color: #d1d5db;
+            background: #f9fafb;
+          }
+        }
+      }
+
+      // Preserved Trip Box
+      .preserved-trip-banner {
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+
+        .icon {
+          font-size: 1.1rem;
+        }
+
+        .trip-summary {
+          font-size: 0.85rem;
+          color: #92400e;
+          line-height: 1.4;
+
+          .line strong {
+            color: #78350f;
+          }
+
+          .sub {
+            font-size: 0.78rem;
+            color: #b45309;
+            margin-top: 2px;
+          }
+        }
+      }
+
+      // Error Message
+      .modern-auth-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+        padding: 12px 14px;
+        color: #b91c1c;
+        font-size: 0.86rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      // Form
+      .modern-auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .modern-input-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+
+          label {
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #374151;
+          }
+
+          .field-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+
+            .field-icon {
+              position: absolute;
+              left: 14px;
+              font-size: 1rem;
+              color: #9ca3af;
+              pointer-events: none;
+            }
+
+            input, select {
+              width: 100%;
+              padding: 12px 14px 12px 42px;
+              background: #ffffff;
+              border: 1.5px solid #e5e7eb;
+              border-radius: 12px;
+              font-size: 0.95rem;
+              color: #111827;
+              font-family: inherit;
+              transition: all 0.2s ease;
+
+              &::placeholder {
+                color: #9ca3af;
+              }
+
+              &:focus {
+                border-color: $rapido-yellow;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(253, 184, 19, 0.2);
+              }
+            }
+          }
+        }
+
+        .driver-onboarding-panel {
+          background: #f8fafc;
+          border: 1.5px dashed #cbd5e1;
+          border-radius: 14px;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          margin-top: 4px;
+
+          .panel-badge {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+          }
+        }
+
+        .btn-modern-auth-submit {
+          margin-top: 8px;
+          background: $rapido-yellow;
+          color: #111827;
+          border: none;
+          border-radius: 12px;
+          padding: 15px;
+          font-size: 1.05rem;
+          font-weight: 800;
+          cursor: pointer;
+          box-shadow: 0 6px 18px rgba(253, 184, 19, 0.35);
+          transition: all 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background: $rapido-yellow-hover;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(253, 184, 19, 0.5);
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+
+          .btn-loading-flex {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+
+            .spinner-sm {
+              width: 18px;
+              height: 18px;
+              border: 2px solid rgba(17, 24, 39, 0.2);
+              border-top-color: #111827;
+              border-radius: 50%;
+              animation: spin 0.8s linear infinite;
+            }
+          }
+        }
+      }
+
+      .modern-auth-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: #6b7280;
+
+        .link-btn {
+          background: none;
+          border: none;
+          color: #111827;
+          font-weight: 800;
+          cursor: pointer;
           text-decoration: underline;
+          padding: 0;
+          font-size: inherit;
+
+          &:hover {
+            color: #d97706;
+          }
+        }
+      }
+
+      // Demo testing card
+      .modern-demo-testing-box {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #f3f4f6;
+
+        .demo-box-header {
+          text-align: center;
+          margin-bottom: 12px;
+
+          span {
+            font-size: 0.74rem;
+            font-weight: 800;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+          }
+        }
+
+        .demo-buttons-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+
+          button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .btn-demo-passenger {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+
+            &:hover {
+              background: #fde68a;
+              transform: translateY(-1px);
+            }
+          }
+
+          .btn-demo-driver {
+            background: #111827;
+            border: 1px solid #111827;
+            color: #ffffff;
+
+            &:hover {
+              background: #1f2937;
+              transform: translateY(-1px);
+            }
+          }
         }
       }
     }
@@ -1599,141 +2001,148 @@ $rapido-border: #e5e7eb;
           }
         }
 
+        .hero-floating-badges {
+          position: absolute;
+          top: 24px;
+          left: 20px;
+          right: 20px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          z-index: 5;
+
+          .hero-pill-badge {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #1f2937;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            animation: pulseSubtle 3s ease-in-out infinite;
+
+            &.badge-fast {
+              background: #fef3c7;
+              border-color: #fde68a;
+              color: #92400e;
+            }
+
+            &.badge-pin {
+              background: #e0e7ff;
+              border-color: #c7d2fe;
+              color: #3730a3;
+            }
+
+            &.badge-surge {
+              background: #dcfce7;
+              border-color: #bbf7d0;
+              color: #166534;
+            }
+          }
+        }
+
         .fleet-illustration-wrapper {
           position: relative;
-          z-index: 2;
+          z-index: 3;
           width: 100%;
-          display: flex;
-          justify-content: center;
-          align-items: flex-end;
-          gap: 12px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-bottom: 20px;
 
-          // CSS Styled Vehicle Visuals
-          .fleet-vehicle {
+          @media (max-width: 640px) {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+
+          .fleet-card {
+            background: #ffffff;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 10px 8px 8px 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.25s ease;
             position: relative;
-            background: #ffffff;
-            border: 2px solid #111827;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-          }
 
-          .bike-visual {
-            width: 110px;
-            height: 120px;
-            background: #fef08a;
-            border-radius: 18px 18px 8px 8px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-
-            .driver-helmet {
-              width: 36px;
-              height: 36px;
-              background: $rapido-yellow;
-              border: 3px solid #111827;
-              border-radius: 50%;
+            &:hover {
+              transform: translateY(-4px);
+              box-shadow: 0 12px 30px rgba(253, 184, 19, 0.2);
+              border-color: $rapido-yellow;
             }
 
-            .bike-body {
+            .vehicle-tag {
               font-size: 0.72rem;
-              font-weight: 900;
+              font-weight: 800;
               color: #111827;
-              background: #fff;
-              padding: 2px 6px;
-              border-radius: 4px;
-            }
-
-            .wheel {
-              width: 28px;
-              height: 28px;
-              border: 4px solid #111827;
-              border-radius: 50%;
-              background: #d1d5db;
-            }
-          }
-
-          .auto-visual {
-            width: 140px;
-            height: 150px;
-            background: #dcfce7;
-            border: 3px solid #111827;
-            border-radius: 20px 20px 10px 10px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-
-            .auto-hood {
-              width: 100%;
-              height: 24px;
-              background: $rapido-yellow;
-              border-radius: 10px 10px 0 0;
-            }
-
-            .auto-cabin {
-              width: 100%;
-              text-align: center;
-
-              .windshield {
-                width: 100%;
-                height: 45px;
-                background: #e0f2fe;
-                border: 2px solid #111827;
-                border-radius: 6px;
-                margin-bottom: 6px;
-              }
-
-              .auto-badge {
-                font-size: 0.72rem;
-                font-weight: 800;
-                background: #111827;
-                color: #fff;
-                padding: 2px 8px;
-                border-radius: 4px;
-              }
-            }
-          }
-
-          .cab-visual {
-            width: 150px;
-            height: 135px;
-            background: #ffffff;
-            border: 3px solid #111827;
-            border-radius: 22px 22px 10px 10px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-
-            .cab-roof-sign {
-              background: $rapido-yellow;
-              color: #111827;
-              font-size: 0.65rem;
-              font-weight: 900;
+              background: #fef08a;
               padding: 2px 8px;
-              border-radius: 4px;
-              border: 2px solid #111827;
+              border-radius: 10px;
+              margin-bottom: 4px;
             }
 
-            .cab-glass {
-              width: 90%;
-              height: 38px;
-              background: #dbeafe;
-              border: 2px solid #111827;
-              border-radius: 6px;
+            .vehicle-svg {
+              width: 100%;
+              height: 85px;
+              display: block;
+              transition: transform 0.2s ease;
             }
 
-            .cab-body {
-              .cab-badge {
-                font-size: 0.72rem;
-                font-weight: 800;
-                color: #111827;
-              }
+            &:hover .vehicle-svg {
+              transform: scale(1.04);
             }
+
+            .vehicle-name-label {
+              font-size: 0.68rem;
+              font-weight: 600;
+              color: #6b7280;
+              text-align: center;
+              margin-top: 4px;
+            }
+
+            &.bike-card {
+              border-top: 3px solid #f59e0b;
+            }
+
+            &.auto-card {
+              border-top: 3px solid #10b981;
+            }
+
+            &.cab-card {
+              border-top: 3px solid #6366f1;
+            }
+          }
+        }
+
+        .hero-fleet-road {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 36px;
+          background: #1f2937;
+          border-top: 3px solid #111827;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+
+          .road-stripes {
+            width: 100%;
+            height: 3px;
+            background: repeating-linear-gradient(
+              90deg,
+              #f59e0b 0px,
+              #f59e0b 24px,
+              transparent 24px,
+              transparent 48px
+            );
           }
         }
       }

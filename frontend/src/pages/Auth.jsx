@@ -1,18 +1,46 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../App.jsx';
 
-export default function Auth() {
-  const { login } = useAuth();
+export default function Auth({ defaultMode = 'login' }) {
+  const { user, token, login, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const queryRole = searchParams.get('role');
+  const queryMode = searchParams.get('mode');
 
   const returnTo = location.state?.returnTo;
   const bookingData = location.state?.bookingData;
 
-  const [isLoginMode, setIsLoginMode] = useState(true);
-  const [role, setRole] = useState('passenger'); // passenger or driver
-  
+  // Determine initial mode & role from URL params or props
+  const [isLoginMode, setIsLoginMode] = useState(
+    defaultMode === 'register' || queryMode === 'register' ? false : true
+  );
+  const [role, setRole] = useState(queryRole === 'driver' ? 'driver' : 'passenger');
+
+  // Sync mode if query params change
+  useEffect(() => {
+    if (queryMode === 'register' || defaultMode === 'register') {
+      setIsLoginMode(false);
+    } else if (queryMode === 'login' || defaultMode === 'login') {
+      setIsLoginMode(true);
+    }
+    if (queryRole === 'driver') {
+      setRole('driver');
+    } else if (queryRole === 'passenger') {
+      setRole('passenger');
+    }
+  }, [queryMode, queryRole, defaultMode]);
+
+  // If already logged in and simply visiting /login without specific register intent, redirect
+  useEffect(() => {
+    if (token && user && defaultMode !== 'register' && queryMode !== 'register' && !queryRole) {
+      navigate(user.role === 'driver' ? '/driver' : '/passenger', { replace: true });
+    }
+  }, [token, user, defaultMode, queryMode, queryRole, navigate]);
+
   // Form fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -20,7 +48,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [vehicleName, setVehicleName] = useState('');
   const [vehicleNumber, setVehicleNumber] = useState('');
-  const [vehicleType, setVehicleType] = useState('sedan');
+  const [vehicleType, setVehicleType] = useState('bike');
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,7 +82,7 @@ export default function Auth() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Authentication failed. Please try again.');
+        throw new Error(data.message || 'Authentication failed. Please check your credentials.');
       }
 
       // Log user in
@@ -93,7 +121,7 @@ export default function Auth() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: demoRole === 'driver' ? 'Rahul Sharma (Driver)' : 'Amit Verma (Passenger)',
+            name: demoRole === 'driver' ? 'Rahul Sharma (Captain)' : 'Amit Verma (Passenger)',
             email: demoEmail,
             phone: '9876543210',
             password: demoPassword,
@@ -128,206 +156,298 @@ export default function Auth() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card glass-panel animate-fade">
-        <div className="auth-header">
-          <h2>{isLoginMode ? 'Welcome Back' : 'Join Tripzy'}</h2>
-          <p>{isLoginMode ? 'Login to your ride-sharing dashboard' : 'Create an account to request or accept rides'}</p>
-        </div>
+    <div className="modern-auth-viewport">
+      {/* Top Navigation Bar */}
+      <div className="auth-top-nav">
+        <Link to="/" className="back-home-link">
+          <span className="arrow">←</span> Back to Homepage
+        </Link>
+        <Link to="/" className="auth-logo-badge">
+          <span className="yellow-pill">tripzy</span>
+        </Link>
+      </div>
 
-        {bookingData && bookingData.pickupAddress && (
-          <div style={{
-            padding: '10px 14px',
-            background: '#FEF3C7',
-            border: '1px solid #FCD34D',
-            borderRadius: '10px',
-            color: '#92400E',
-            marginBottom: '16px',
-            fontSize: '0.85rem',
-            lineHeight: 1.4
-          }}>
-            <strong>📍 Preserved Trip:</strong> {bookingData.pickupAddress.slice(0, 28)}... → {bookingData.dropAddress?.slice(0, 28)}...
-            <div style={{ fontSize: '0.78rem', marginTop: '2px', color: '#B45309' }}>Log in or sign up to finalize your ride.</div>
+      <div className="auth-central-container">
+        <div className="modern-auth-card">
+          {/* Header */}
+          <div className="modern-auth-header">
+            <span className="auth-mini-chip">
+              {isLoginMode ? '🔑 Member Login' : role === 'driver' ? '🚕 Driver Partner Onboarding' : '🚶 Passenger Sign Up'}
+            </span>
+            <h2>{isLoginMode ? 'Welcome Back!' : role === 'driver' ? 'Drive with Tripzy' : 'Create Your Account'}</h2>
+            <p>
+              {isLoginMode 
+                ? 'Sign in to access your rides, tracking, and live earnings.' 
+                : role === 'driver'
+                  ? 'Earn up to ₹45,000/month with zero commission & instant daily payouts.'
+                  : 'Join India\'s fastest-growing ride-hailing app in 30 seconds.'}
+            </p>
           </div>
-        )}
 
-        {error && (
-          <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px', color: '#fca5a5', marginBottom: '20px', fontSize: '0.9rem', textAlign: 'center' }}>
-            {error}
-          </div>
-        )}
+          {/* Active Session Notice (If already logged in but trying to register a driver account) */}
+          {token && user && (
+            <div className="active-session-banner">
+              <div className="session-icon">👤</div>
+              <div className="session-text">
+                <strong>Signed in as {user.name}</strong> ({user.role})
+                <p>Want to register a new {role === 'driver' ? 'Driver Partner' : 'Passenger'} account?</p>
+              </div>
+              <div className="session-actions">
+                <button
+                  type="button"
+                  onClick={() => { logout(); setIsLoginMode(false); }}
+                  className="btn-switch-account"
+                >
+                  Switch & Register →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(user.role === 'driver' ? '/driver' : '/passenger')}
+                  className="btn-session-dash"
+                >
+                  Map Dashboard
+                </button>
+              </div>
+            </div>
+          )}
 
-        {/* Toggle between Passenger / Driver role selection in registration mode */}
-        {!isLoginMode && (
-          <div className="role-selector">
-            <button 
-              type="button" 
-              className={role === 'passenger' ? 'active' : ''} 
-              onClick={() => setRole('passenger')}
+          {/* Mode Switcher Tabs */}
+          <div className="modern-mode-tabs">
+            <button
+              type="button"
+              className={`mode-tab-btn ${isLoginMode ? 'active' : ''}`}
+              onClick={() => { setIsLoginMode(true); setError(''); }}
             >
-              Passenger Account
+              Sign In
             </button>
-            <button 
-              type="button" 
-              className={role === 'driver' ? 'active' : ''} 
-              onClick={() => setRole('driver')}
+            <button
+              type="button"
+              className={`mode-tab-btn ${!isLoginMode ? 'active' : ''}`}
+              onClick={() => { setIsLoginMode(false); setError(''); }}
             >
-              Driver Partner
+              Register New Account
             </button>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit}>
+          {/* Role Selector (When in Register mode) */}
           {!isLoginMode && (
-            <div className="input-group">
-              <label>Full Name</label>
-              <input 
-                type="text" 
-                placeholder="John Doe" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required 
-              />
+            <div className="modern-role-selector">
+              <button 
+                type="button" 
+                className={`role-pill-btn ${role === 'passenger' ? 'active' : ''}`} 
+                onClick={() => setRole('passenger')}
+              >
+                <span className="role-icon">🚶</span>
+                <span className="role-label">Passenger (Rider)</span>
+              </button>
+              <button 
+                type="button" 
+                className={`role-pill-btn ${role === 'driver' ? 'active' : ''}`} 
+                onClick={() => setRole('driver')}
+              >
+                <span className="role-icon">🚕</span>
+                <span className="role-label">Driver Partner</span>
+              </button>
             </div>
           )}
 
-          <div className="input-group">
-            <label>Email Address</label>
-            <input 
-              type="email" 
-              placeholder="name@example.com" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-            />
-          </div>
-
-          {!isLoginMode && (
-            <div className="input-group">
-              <label>Phone Number</label>
-              <input 
-                type="tel" 
-                placeholder="+91 9876543210" 
-                value={phone} 
-                onChange={(e) => setPhone(e.target.value)} 
-                required 
-              />
-            </div>
-          )}
-
-          <div className="input-group">
-            <label>Password</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-            />
-          </div>
-
-          {/* Dynamic Driver Vehicle Fields */}
-          {!isLoginMode && role === 'driver' && (
-            <div className="animate-slide" style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)', marginBottom: '8px' }}>
-              <div className="input-group" style={{ marginBottom: 0 }}>
-                <label>Vehicle Name / Model</label>
-                <input 
-                  type="text" 
-                  placeholder="Suzuki Dzire / Honda Activa" 
-                  value={vehicleName} 
-                  onChange={(e) => setVehicleName(e.target.value)} 
-                  required 
-                />
-              </div>
-
-              <div className="input-group" style={{ marginBottom: 0 }}>
-                <label>Vehicle Registration Number</label>
-                <input 
-                  type="text" 
-                  placeholder="DL-3C-AB-1234" 
-                  value={vehicleNumber} 
-                  onChange={(e) => setVehicleNumber(e.target.value)} 
-                  required 
-                />
-              </div>
-
-              <div className="input-group" style={{ marginBottom: 0 }}>
-                <label>Vehicle Category</label>
-                <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)}>
-                  <option value="sedan">🚗 Sedan (Economy)</option>
-                  <option value="suv">🚙 SUV (Premium)</option>
-                  <option value="auto">🛺 Auto Rickshaw</option>
-                  <option value="bike">🏍️ Motorbike</option>
-                </select>
+          {/* Preserved Booking Info from Landing Page */}
+          {bookingData && bookingData.pickupAddress && (
+            <div className="preserved-trip-banner">
+              <span className="icon">📍</span>
+              <div className="trip-summary">
+                <div className="line"><strong>Trip Queued:</strong> {bookingData.pickupAddress.slice(0, 26)}... → {bookingData.dropAddress?.slice(0, 26)}...</div>
+                <div className="sub">Complete login to dispatch your driver immediately.</div>
               </div>
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} disabled={loading}>
-            {loading ? (
-              <div className="spinner"></div>
-            ) : isLoginMode ? (
-              'Sign In'
-            ) : (
-              'Create Account'
+          {/* Error Message Alert */}
+          {error && (
+            <div className="modern-auth-error">
+              <span className="error-icon">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Main Form */}
+          <form onSubmit={handleSubmit} className="modern-auth-form">
+            {!isLoginMode && (
+              <div className="modern-input-group">
+                <label>Full Name</label>
+                <div className="field-wrapper">
+                  <span className="field-icon">👤</span>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Rahul Sharma" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    required 
+                  />
+                </div>
+              </div>
             )}
-          </button>
-        </form>
 
-        <div className="auth-footer">
-          {isLoginMode ? (
-            <p>
-              Don't have an account? 
-              <span onClick={() => { setIsLoginMode(false); setError(''); }}>Sign Up</span>
-            </p>
-          ) : (
-            <p>
-              Already have an account? 
-              <span onClick={() => { setIsLoginMode(true); setError(''); }}>Sign In</span>
-            </p>
-          )}
-        </div>
+            <div className="modern-input-group">
+              <label>Email Address</label>
+              <div className="field-wrapper">
+                <span className="field-icon">✉️</span>
+                <input 
+                  type="email" 
+                  placeholder="name@example.com" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                />
+              </div>
+            </div>
 
-        {/* 1-Click Demo Testing Access */}
-        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.78rem', color: '#9CA3AF', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Instant Demo Logins (No Setup Required)
+            {!isLoginMode && (
+              <div className="modern-input-group">
+                <label>Mobile Number</label>
+                <div className="field-wrapper">
+                  <span className="field-icon">📱</span>
+                  <input 
+                    type="tel" 
+                    placeholder="+91 98765 43210" 
+                    value={phone} 
+                    onChange={(e) => setPhone(e.target.value)} 
+                    required 
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="modern-input-group">
+              <label>Password</label>
+              <div className="field-wrapper">
+                <span className="field-icon">🔒</span>
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                />
+              </div>
+            </div>
+
+            {/* Dynamic Driver Vehicle Registration Section */}
+            {!isLoginMode && role === 'driver' && (
+              <div className="driver-onboarding-panel">
+                <div className="panel-badge">🚕 Vehicle Registration Details</div>
+                
+                <div className="modern-input-group">
+                  <label>Vehicle Model / Make</label>
+                  <div className="field-wrapper">
+                    <span className="field-icon">🛵</span>
+                    <input 
+                      type="text" 
+                      placeholder="Honda Activa 6G / WagonR / Bajaj Auto" 
+                      value={vehicleName} 
+                      onChange={(e) => setVehicleName(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div className="modern-input-group">
+                  <label>Vehicle Plate / Registration Number</label>
+                  <div className="field-wrapper">
+                    <span className="field-icon">🔢</span>
+                    <input 
+                      type="text" 
+                      placeholder="DL-01-AB-1234" 
+                      value={vehicleNumber} 
+                      onChange={(e) => setVehicleNumber(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div className="modern-input-group">
+                  <label>Vehicle Category</label>
+                  <div className="field-wrapper">
+                    <span className="field-icon">🚖</span>
+                    <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)}>
+                      <option value="bike">🏍️ Bike Taxi (Fastest through traffic)</option>
+                      <option value="auto">🛺 Auto Rickshaw (Budget commute)</option>
+                      <option value="sedan">🚗 Tripzy Go Sedan (AC Comfort)</option>
+                      <option value="suv">🚙 Tripzy Premier SUV (Spacious)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button type="submit" className="btn-modern-auth-submit" disabled={loading}>
+              {loading ? (
+                <span className="btn-loading-flex">
+                  <span className="spinner-sm"></span> Processing...
+                </span>
+              ) : isLoginMode ? (
+                'Sign In to Dashboard →'
+              ) : role === 'driver' ? (
+                'Register as Driver Partner ➔'
+              ) : (
+                'Create Passenger Account ➔'
+              )}
+            </button>
+          </form>
+
+          {/* Bottom Switch Link */}
+          <div className="modern-auth-footer">
+            {isLoginMode ? (
+              <p>
+                Don't have an account yet?{' '}
+                <button 
+                  type="button" 
+                  className="link-btn" 
+                  onClick={() => { setIsLoginMode(false); setError(''); }}
+                >
+                  Create Account
+                </button>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{' '}
+                <button 
+                  type="button" 
+                  className="link-btn" 
+                  onClick={() => { setIsLoginMode(true); setError(''); }}
+                >
+                  Sign In
+                </button>
+              </p>
+            )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('passenger')}
-              disabled={loading}
-              style={{
-                padding: '8px 12px',
-                background: '#F59E0B',
-                color: '#111827',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              ⚡ Demo Passenger
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('driver')}
-              disabled={loading}
-              style={{
-                padding: '8px 12px',
-                background: '#1F2937',
-                color: '#F9FAFB',
-                border: '1px solid #374151',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              🚕 Demo Driver
-            </button>
+
+          {/* 1-Click Instant Demo Testing Section */}
+          <div className="modern-demo-testing-box">
+            <div className="demo-box-header">
+              <span>⚡ 1-Click Instant Demo Evaluation</span>
+            </div>
+            <div className="demo-buttons-grid">
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('passenger')}
+                disabled={loading}
+                className="btn-demo-passenger"
+              >
+                <span className="icon">⚡</span>
+                <span className="label">Demo Passenger</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('driver')}
+                disabled={loading}
+                className="btn-demo-driver"
+              >
+                <span className="icon">🚕</span>
+                <span className="label">Demo Driver Partner</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
