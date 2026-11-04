@@ -21,11 +21,29 @@ export default function PassengerDashboard() {
   const [pickupAddress, setPickupAddress] = useState('');
   const [dropLoc, setDropLoc] = useState(null);
   const [dropAddress, setDropAddress] = useState('');
+  const [userLiveCoords, setUserLiveCoords] = useState(null); // [lon, lat]
 
   // Search suggestions states
   const [suggestions, setSuggestions] = useState([]);
   const [activeInput, setActiveInput] = useState(''); // 'pickup' or 'drop'
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Auto-detect user live location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = [pos.coords.longitude, pos.coords.latitude];
+          setUserLiveCoords(coords);
+          if (!pickupLoc) {
+            setPickupLoc({ type: 'Point', coordinates: coords });
+          }
+        },
+        (err) => console.warn('Geolocation lookup notice:', err),
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+  }, []);
 
   // Ride states
   const [distanceKm, setDistanceKm] = useState(0);
@@ -417,16 +435,33 @@ export default function PassengerDashboard() {
 
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
 
-    if (!val || val.length < 3) {
+    if (!val || val.length < 2) {
       setSuggestions([]);
       return;
     }
+
+    // Determine reference coordinate for proximity bias (intra-city priority)
+    const refCoords = (type === 'drop' && pickupLoc?.coordinates)
+      ? pickupLoc.coordinates
+      : (userLiveCoords || pickupLoc?.coordinates || null);
+    
+    const biasParams = refCoords ? `&lat=${refCoords[1]}&lon=${refCoords[0]}` : '';
+
+    const haversineKm = (lon1, lat1, lon2, lat2) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return +(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
+    };
 
     debounceTimeout.current = setTimeout(async () => {
       try {
         let results = [];
         try {
-          const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}`);
+          const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}${biasParams}`);
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0 && !data[0].display_name?.includes('(Simulated Location)')) {
@@ -437,35 +472,51 @@ export default function PassengerDashboard() {
           console.warn('Backend geocode fetch failed, using direct client lookup:', backendErr);
         }
 
-        // Direct browser fallback to Photon (real worldwide OSM database)
+        // Direct browser fallback to Photon with proximity bias
         if (results.length === 0) {
           try {
-            const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=5`);
+            const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(val)}${biasParams}&limit=12`);
             if (directRes.ok) {
               const data = await directRes.json();
-              results = (data.features || []).map((f, idx) => ({
-                place_id: f.properties.osm_id || (Date.now() + idx),
-                display_name: [
-                  f.properties.name,
-                  f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
-                  f.properties.street,
-                  f.properties.district,
-                  f.properties.city,
-                  f.properties.state,
-                  f.properties.country
-                ].filter(Boolean).join(', '),
-                lat: String(f.geometry.coordinates[1]),
-                lon: String(f.geometry.coordinates[0])
-              }));
+              results = (data.features || []).map((f, idx) => {
+                const fLat = f.geometry.coordinates[1];
+                const fLon = f.geometry.coordinates[0];
+                const dist = refCoords ? haversineKm(refCoords[0], refCoords[1], fLon, fLat) : null;
+                return {
+                  place_id: f.properties.osm_id || (Date.now() + idx),
+                  display_name: [
+                    f.properties.name,
+                    f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
+                    f.properties.street,
+                    f.properties.district,
+                    f.properties.city,
+                    f.properties.state,
+                    f.properties.country
+                  ].filter(Boolean).join(', '),
+                  lat: String(fLat),
+                  lon: String(fLon),
+                  dist
+                };
+              });
+
+              if (refCoords) {
+                const localResults = results.filter(r => r.dist !== null && r.dist <= 75);
+                if (localResults.length > 0) {
+                  localResults.sort((a, b) => a.dist - b.dist);
+                  results = localResults;
+                } else {
+                  results.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
+                }
+              }
             }
           } catch (dErr) {}
         }
 
-        setSuggestions(results);
+        setSuggestions(results.slice(0, 6));
       } catch (err) {
         console.error('Suggestions error:', err);
       }
-    }, 400);
+    }, 350);
   };
 
   const selectSuggestion = (item) => {
@@ -858,8 +909,19 @@ export default function PassengerDashboard() {
                 {activeInput === 'pickup' && suggestions.length > 0 && (
                   <ul className="suggestions-list">
                     {suggestions.map((item) => (
-                      <li key={item.place_id} onClick={() => selectSuggestion(item)}>
-                        {item.display_name}
+                      <li
+                        key={item.place_id}
+                        onClick={() => selectSuggestion(item)}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                      >
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '8px' }}>
+                          {item.display_name}
+                        </span>
+                        {item.dist != null && (
+                          <span style={{ fontSize: '0.72rem', background: 'rgba(253, 184, 19, 0.15)', color: '#fdb813', padding: '2px 7px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                            {item.dist < 1 ? '< 1 km' : `${item.dist} km`}
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -880,8 +942,19 @@ export default function PassengerDashboard() {
                 {activeInput === 'drop' && suggestions.length > 0 && (
                   <ul className="suggestions-list">
                     {suggestions.map((item) => (
-                      <li key={item.place_id} onClick={() => selectSuggestion(item)}>
-                        {item.display_name}
+                      <li
+                        key={item.place_id}
+                        onClick={() => selectSuggestion(item)}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                      >
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '8px' }}>
+                          {item.display_name}
+                        </span>
+                        {item.dist != null && (
+                          <span style={{ fontSize: '0.72rem', background: 'rgba(253, 184, 19, 0.15)', color: '#fdb813', padding: '2px 7px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                            {item.dist < 1 ? '< 1 km' : `${item.dist} km`}
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -1122,8 +1195,9 @@ export default function PassengerDashboard() {
           routeGeometry={routeGeometry}
           onMapClick={handleMapClick}
           onMapLoaded={(coords) => {
-            // Set default pickup to user position
+            // Set default pickup to user position and save live coords
             setPickupLoc({ type: 'Point', coordinates: coords });
+            setUserLiveCoords(coords);
           }}
         />
       </div>

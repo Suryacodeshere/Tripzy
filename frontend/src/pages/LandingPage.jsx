@@ -11,12 +11,24 @@ export default function LandingPage() {
   const [drop, setDrop] = useState('');
   const [pickupLoc, setPickupLoc] = useState(null);
   const [dropLoc, setDropLoc] = useState(null);
+  const [liveCoords, setLiveCoords] = useState(null); // [lon, lat]
   const [selectedService, setSelectedService] = useState('bike');
   
   const [suggestions, setSuggestions] = useState([]);
   const [activeSearch, setActiveSearch] = useState(''); // 'pickup' | 'drop' | ''
   const [loadingGeocode, setLoadingGeocode] = useState(false);
   const debounceTimer = useRef(null);
+
+  // Auto-detect user live location for search biasing
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setLiveCoords([pos.coords.longitude, pos.coords.latitude]),
+        () => {},
+        { timeout: 7000 }
+      );
+    }
+  }, []);
 
   const services = [
     {
@@ -105,11 +117,27 @@ export default function LandingPage() {
       return;
     }
 
+    const refCoords = (type === 'drop' && pickupLoc?.coordinates)
+      ? pickupLoc.coordinates
+      : (liveCoords || pickupLoc?.coordinates || null);
+
+    const biasParams = refCoords ? `&lat=${refCoords[1]}&lon=${refCoords[0]}` : '';
+
+    const haversineKm = (lon1, lat1, lon2, lat2) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return +(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
+    };
+
     debounceTimer.current = setTimeout(async () => {
       try {
         let results = [];
         try {
-          const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}`);
+          const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(val)}${biasParams}`);
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0 && !data[0].display_name?.includes('(Simulated Location)')) {
@@ -120,28 +148,44 @@ export default function LandingPage() {
 
         if (results.length === 0) {
           try {
-            const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=5`);
+            const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(val)}${biasParams}&limit=12`);
             if (directRes.ok) {
               const data = await directRes.json();
-              results = (data.features || []).map((f, idx) => ({
-                place_id: f.properties.osm_id || (Date.now() + idx),
-                display_name: [
-                  f.properties.name,
-                  f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
-                  f.properties.street,
-                  f.properties.district,
-                  f.properties.city,
-                  f.properties.state,
-                  f.properties.country
-                ].filter(Boolean).join(', '),
-                lat: String(f.geometry.coordinates[1]),
-                lon: String(f.geometry.coordinates[0])
-              }));
+              results = (data.features || []).map((f, idx) => {
+                const fLat = f.geometry.coordinates[1];
+                const fLon = f.geometry.coordinates[0];
+                const dist = refCoords ? haversineKm(refCoords[0], refCoords[1], fLon, fLat) : null;
+                return {
+                  place_id: f.properties.osm_id || (Date.now() + idx),
+                  display_name: [
+                    f.properties.name,
+                    f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
+                    f.properties.street,
+                    f.properties.district,
+                    f.properties.city,
+                    f.properties.state,
+                    f.properties.country
+                  ].filter(Boolean).join(', '),
+                  lat: String(fLat),
+                  lon: String(fLon),
+                  dist
+                };
+              });
+
+              if (refCoords) {
+                const localResults = results.filter(r => r.dist !== null && r.dist <= 75);
+                if (localResults.length > 0) {
+                  localResults.sort((a, b) => a.dist - b.dist);
+                  results = localResults;
+                } else {
+                  results.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
+                }
+              }
             }
           } catch (dErr) {}
         }
 
-        setSuggestions(results);
+        setSuggestions(results.slice(0, 6));
       } catch (e) {
         console.error('Landing geocode error:', e);
       }
@@ -165,8 +209,9 @@ export default function LandingPage() {
   };
 
   const resolveGeocode = async (address) => {
+    const biasParams = liveCoords ? `&lat=${liveCoords[1]}&lon=${liveCoords[0]}` : '';
     try {
-      const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(address)}`);
+      const res = await fetch(`/api/rides/geocode/search?q=${encodeURIComponent(address)}${biasParams}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0 && !data[0].display_name?.includes('(Simulated Location)')) {
@@ -179,7 +224,7 @@ export default function LandingPage() {
     } catch (e) {}
 
     try {
-      const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1`);
+      const directRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(address)}${biasParams}&limit=1`);
       if (directRes.ok) {
         const data = await directRes.json();
         if (data.features && data.features.length > 0) {
@@ -342,9 +387,19 @@ export default function LandingPage() {
                         key={idx}
                         className="landing-suggestion-item"
                         onClick={() => handleSelectSuggestion(item, 'pickup')}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                       >
-                        <span className="icon">📍</span>
-                        <span className="text">{item.display_name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                          <span className="icon">📍</span>
+                          <span className="text" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.display_name}
+                          </span>
+                        </div>
+                        {item.dist != null && (
+                          <span style={{ fontSize: '0.72rem', background: '#FEF3C7', color: '#92400E', padding: '2px 7px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 600, marginLeft: '8px' }}>
+                            {item.dist < 1 ? '< 1 km' : `${item.dist} km`}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -380,9 +435,19 @@ export default function LandingPage() {
                         key={idx}
                         className="landing-suggestion-item"
                         onClick={() => handleSelectSuggestion(item, 'drop')}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                       >
-                        <span className="icon">🏁</span>
-                        <span className="text">{item.display_name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                          <span className="icon">🏁</span>
+                          <span className="text" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.display_name}
+                          </span>
+                        </div>
+                        {item.dist != null && (
+                          <span style={{ fontSize: '0.72rem', background: '#FEF3C7', color: '#92400E', padding: '2px 7px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 600, marginLeft: '8px' }}>
+                            {item.dist < 1 ? '< 1 km' : `${item.dist} km`}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -441,54 +441,104 @@ router.post('/:id/rating', authenticateToken, async (req, res) => {
   }
 });
 
-// GEOLOCATION PROXY (Photon + Nominatim with zero simulated labels)
+// GEOLOCATION PROXY (Photon + Nominatim with location bias and distance filtering)
 router.get('/geocode/search', async (req, res) => {
-  const { q } = req.query;
+  const { q, lat, lon } = req.query;
   if (!q) {
     return res.status(400).json({ message: 'Query query string (q) is required.' });
   }
 
-  // 1. Try Photon first (high availability, OSM-based global search, no cloud IP restrictions)
+  const userLat = lat ? parseFloat(lat) : null;
+  const userLon = lon ? parseFloat(lon) : null;
+  const hasUserCoords = userLat !== null && userLon !== null && !isNaN(userLat) && !isNaN(userLon);
+
+  // 1. Try Photon first (high availability, OSM-based global search with proximity biasing)
   try {
-    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`;
+    const biasParam = hasUserCoords ? `&lat=${userLat}&lon=${userLon}` : '';
+    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}${biasParam}&limit=12`;
     const pResponse = await fetch(photonUrl, {
       headers: { 'User-Agent': 'Tripzy-RideSharing/1.0' }
     });
     if (pResponse.ok) {
       const pData = await pResponse.json();
       if (Array.isArray(pData.features) && pData.features.length > 0) {
-        const results = pData.features.map((f, idx) => ({
-          place_id: f.properties.osm_id || (Date.now() + idx),
-          display_name: [
-            f.properties.name,
-            f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
-            f.properties.street,
-            f.properties.district,
-            f.properties.city,
-            f.properties.state,
-            f.properties.country
-          ].filter(Boolean).join(', '),
-          lat: String(f.geometry.coordinates[1]),
-          lon: String(f.geometry.coordinates[0])
-        }));
-        return res.json(results);
+        let results = pData.features.map((f, idx) => {
+          const fLat = f.geometry.coordinates[1];
+          const fLon = f.geometry.coordinates[0];
+          const dist = hasUserCoords ? +(calculateDistanceKm([userLon, userLat], [fLon, fLat])).toFixed(1) : null;
+          return {
+            place_id: f.properties.osm_id || (Date.now() + idx),
+            display_name: [
+              f.properties.name,
+              f.properties.housenumber ? ('#' + f.properties.housenumber) : null,
+              f.properties.street,
+              f.properties.district,
+              f.properties.city,
+              f.properties.state,
+              f.properties.country
+            ].filter(Boolean).join(', '),
+            lat: String(fLat),
+            lon: String(fLon),
+            dist
+          };
+        });
+
+        // Filter and prioritize locations within metropolitan/city radius (< 75 km)
+        if (hasUserCoords) {
+          const localResults = results.filter(r => r.dist !== null && r.dist <= 75);
+          if (localResults.length > 0) {
+            localResults.sort((a, b) => a.dist - b.dist);
+            return res.json(localResults.slice(0, 6));
+          }
+          results.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
+        }
+
+        return res.json(results.slice(0, 6));
       }
     }
   } catch (photonErr) {
     console.warn('⚠️ Photon search warning:', photonErr.message);
   }
 
-  // 2. Try Nominatim with application identification and contact email
+  // 2. Try Nominatim with bounding viewbox if coordinates provided
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=5&email=tripzyapp@gmail.com`;
-    const response = await fetch(url, {
+    let nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=in&limit=8&email=tripzyapp@gmail.com`;
+    if (hasUserCoords) {
+      const delta = 0.65; // ~70 km radius
+      const viewbox = `${userLon - delta},${userLat + delta},${userLon + delta},${userLat - delta}`;
+      nomUrl += `&viewbox=${viewbox}`;
+    }
+
+    const response = await fetch(nomUrl, {
       headers: { 'User-Agent': 'TripzyApp/1.0 (https://tripzy-6xho.vercel.app; support@tripzy.com)' }
     });
     
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
-        return res.json(data);
+        let results = data.map(item => {
+          const iLat = parseFloat(item.lat);
+          const iLon = parseFloat(item.lon);
+          const dist = hasUserCoords ? +(calculateDistanceKm([userLon, userLat], [iLon, iLat])).toFixed(1) : null;
+          return {
+            place_id: item.place_id,
+            display_name: item.display_name,
+            lat: String(item.lat),
+            lon: String(item.lon),
+            dist
+          };
+        });
+
+        if (hasUserCoords) {
+          const localResults = results.filter(r => r.dist !== null && r.dist <= 75);
+          if (localResults.length > 0) {
+            localResults.sort((a, b) => a.dist - b.dist);
+            return res.json(localResults.slice(0, 6));
+          }
+          results.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
+        }
+
+        return res.json(results.slice(0, 6));
       }
     }
   } catch (error) {
@@ -511,14 +561,22 @@ router.get('/geocode/search', async (req, res) => {
   ];
 
   const matched = mockLocations.filter(loc => loc.name.toLowerCase().includes(query));
-  const formattedResponse = matched.map((loc, idx) => ({
-    place_id: 1000 + idx,
-    display_name: loc.name,
-    lat: String(loc.lat),
-    lon: String(loc.lon)
-  }));
+  let formattedResponse = matched.map((loc, idx) => {
+    const dist = hasUserCoords ? +(calculateDistanceKm([userLon, userLat], [loc.lon, loc.lat])).toFixed(1) : null;
+    return {
+      place_id: 1000 + idx,
+      display_name: loc.name,
+      lat: String(loc.lat),
+      lon: String(loc.lon),
+      dist
+    };
+  });
 
-  return res.json(formattedResponse);
+  if (hasUserCoords) {
+    formattedResponse.sort((a, b) => (a.dist ?? 99999) - (b.dist ?? 99999));
+  }
+
+  return res.json(formattedResponse.slice(0, 6));
 });
 
 // GEOLOCATION REVERSE PROXY (Nominatim + BigDataCloud)
