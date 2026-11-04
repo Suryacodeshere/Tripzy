@@ -343,7 +343,7 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
 
     // Safety OTP verification before starting trip
     if (status === 'started' && ride.startOtp) {
-      const providedOtp = (req.body.otp || '').toString().trim();
+      const providedOtp = (req.body.otp || req.body.startOtp || '').toString().trim();
       if (!providedOtp || providedOtp !== ride.startOtp.toString().trim()) {
         return res.status(400).json({ message: 'Invalid or missing 4-digit Security PIN. Please ask the passenger for their PIN.' });
       }
