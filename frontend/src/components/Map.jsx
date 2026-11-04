@@ -23,6 +23,11 @@ export default function Map({
   // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
+    if (mapRef.current) return;
+
+    if (mapContainerRef.current._leaflet_id) {
+      mapContainerRef.current._leaflet_id = null;
+    }
 
     // Bangalore default center coords
     const defaultCenter = [12.9716, 77.5946];
@@ -30,15 +35,18 @@ export default function Map({
     const map = L.map(mapContainerRef.current, {
       center: defaultCenter,
       zoom: 13,
-      zoomControl: false // We will add zoom control at bottom-right for clean UI
+      zoomControl: false,
+      fadeAnimation: true,
+      zoomAnimation: true
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // OpenStreetMap tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19
+    // CartoDB Voyager tiles (high performance, modern street details, reliable CDN)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20
     }).addTo(map);
 
     mapRef.current = map;
@@ -47,10 +55,13 @@ export default function Map({
     // Size invalidation triggers to guarantee tiles render properly even in flex layouts
     const t1 = setTimeout(() => {
       if (map) map.invalidateSize();
-    }, 150);
+    }, 50);
     const t2 = setTimeout(() => {
       if (map) map.invalidateSize();
-    }, 500);
+    }, 250);
+    const t3 = setTimeout(() => {
+      if (map) map.invalidateSize();
+    }, 750);
 
     const handleResize = () => {
       if (map) map.invalidateSize();
@@ -91,10 +102,14 @@ export default function Map({
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(t3);
       window.removeEventListener('resize', handleResize);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
+      }
+      if (mapContainerRef.current) {
+        mapContainerRef.current._leaflet_id = null;
       }
     };
   }, []);
@@ -262,9 +277,17 @@ export default function Map({
   }, [nearbyDrivers, driverLoc]);
 
   return (
-    <div style={{ width: '100%', height: '100%', minHeight: '100%', position: 'relative' }}>
-      <div ref={mapContainerRef} className="map-container" style={{ width: '100%', height: '100%', minHeight: '100%' }} />
-      
+    <div
+      ref={mapContainerRef}
+      id="tripzy-map-canvas"
+      style={{
+        width: '100%',
+        height: '100%',
+        minHeight: 'calc(100vh - 64px)',
+        position: 'relative',
+        zIndex: 1
+      }}
+    >
       {/* Decorative styling overlays injected via plain inline CSS for Leaflet divs */}
       <style>{`
         .custom-pickup-marker, .custom-drop-marker, .custom-driver-tracking-marker, .custom-idle-driver-marker {
